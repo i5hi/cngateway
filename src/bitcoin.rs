@@ -1,8 +1,8 @@
 use crate::e::{ErrorKind, S5Error};
 use serde_derive::{Deserialize, Serialize};
-use ureq;
+use reqwest;
 
-// POST http://cyphernode:8888/watch
+// POST http://cyphernode/watch
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WatchAddressReq {
@@ -69,7 +69,8 @@ impl WatchAddress {
 }
 
 pub async fn watch(ip: String, body: WatchAddressReq) -> Result<WatchAddress, String> {
-    let full_url: String = format!("http://{}:8888/watch", ip).to_string();
+    let full_url: String = format!("http://{}/watch", ip).to_string();
+
     match ureq::post(&full_url).send_json(body.stringify()) {
         Ok(response) => match WatchAddress::structify(&response.into_string().unwrap()) {
             Ok(result) => Ok(result),
@@ -78,7 +79,7 @@ pub async fn watch(ip: String, body: WatchAddressReq) -> Result<WatchAddress, St
         Err(e) => Err(e.to_string()),
     }
 }
-// GET http://cyphernode:8888/getactivewatches
+// GET http://cyphernode/getactivewatches
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveWatches {
@@ -112,7 +113,7 @@ pub struct Watch {
 }
 
 pub async fn getactivewatches(ip: String) -> Result<ActiveWatches, String> {
-  let full_url: String = format!("http://{}:8888/getactivewatches", ip).to_string();
+  let full_url: String = format!("http://{}/getactivewatches", ip).to_string();
   match ureq::get(&full_url).call() {
       Ok(response) => match ActiveWatches::structify(&response.into_string().unwrap()) {
           Ok(result) => Ok(result),
@@ -121,7 +122,7 @@ pub async fn getactivewatches(ip: String) -> Result<ActiveWatches, String> {
       Err(e) => Err(e.to_string()),
   }
 }
-// GET http://cyphernode:8888/unwatch/2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp
+// GET http://cyphernode/unwatch/2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp
 /*
 RESPONSE{
   "event": "unwatch",
@@ -153,7 +154,7 @@ impl UnwatchAddress {
   }
 }
 pub async fn unwatch(ip: String, address:String) -> Result<UnwatchAddress, String> {
-  let full_url: String = format!("http://{}:8888/unwatch/{}", ip,address).to_string();
+  let full_url: String = format!("http://{}/unwatch/{}", ip,address).to_string();
   match ureq::get(&full_url).call() {
       Ok(response) => match UnwatchAddress::structify(&response.into_string().unwrap()) {
           Ok(result) => Ok(result),
@@ -162,7 +163,7 @@ pub async fn unwatch(ip: String, address:String) -> Result<UnwatchAddress, Strin
       Err(e) => Err(e.to_string()),
   }
 }
-// GET http://cyphernode:8888/get_txns_by_watchlabel/Label
+// GET http://cyphernode/get_txns_by_watchlabel/Label
 /*
 RESPONSE{
   "label_txns": [
@@ -181,7 +182,7 @@ RESPONSE{
   ]
 }
 */
-// POST http://cyphernode:8888/watchxpub
+// POST http://cyphernode/watchxpub
 /*
 REQUEST{
     "label":"4421",
@@ -272,7 +273,7 @@ impl WatchXpub {
 }
 
 pub async fn watchxpub(ip: String, body: WatchXpubReq) -> Result<WatchXpub, String> {
-  let full_url: String = format!("http://{}:8888/watch", ip).to_string();
+  let full_url: String = format!("http://{}/watch", ip).to_string();
   match ureq::post(&full_url).send_json(body.stringify()) {
       Ok(response) => match WatchXpub::structify(&response.into_string().unwrap()) {
           Ok(result) => Ok(result),
@@ -282,7 +283,7 @@ pub async fn watchxpub(ip: String, body: WatchXpubReq) -> Result<WatchXpub, Stri
   }
 }
 
-// GET http://cyphernode:8888/unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
+// GET http://cyphernode/unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -303,7 +304,7 @@ impl UnwatchXpub {
   }
 }
 pub async fn unwatchxpubbyxpub(ip: String, xpub: String) -> Result<UnwatchXpub, String> {
-  let full_url: String = format!("http://{}:8888/unwatchxpubbyxpub/{}", ip,xpub).to_string();
+  let full_url: String = format!("http://{}/unwatchxpubbyxpub/{}", ip,xpub).to_string();
   match ureq::get(&full_url).call() {
       Ok(response) => match UnwatchXpub::structify(&response.into_string().unwrap()) {
           Ok(result) => Ok(result),
@@ -313,7 +314,7 @@ pub async fn unwatchxpubbyxpub(ip: String, xpub: String) -> Result<UnwatchXpub, 
   }
 }
 
-// GET http://cyphernode:8888/getactivexpubwatches
+// GET http://cyphernode/getactivexpubwatches
 /*
 RESPONSE{
   "watches": [
@@ -330,7 +331,7 @@ RESPONSE{
 }
 */
 
-// GET http://cyphernode:8888/executecallbacks
+// GET http://cyphernode/executecallbacks
 // executes the callbacks that would be usually executed when "conf" is called by the node.
 
 /*

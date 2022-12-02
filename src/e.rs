@@ -48,23 +48,23 @@ impl S5Error {
       message: message.to_string(),
     }
   }
-  pub fn from_ureq(e: ureq::Error)->Self{
-    match e {
-      ureq::Error::Status(code, response) => {
-        let kind = match code {
-            400 => ErrorKind::Input,
-            401 => ErrorKind::Key,
-            403 => ErrorKind::Key,
-            404 => ErrorKind::NoResource,
-            409 => ErrorKind::Input,
-            _=> ErrorKind::Internal
-        };
-        S5Error::new(kind, &response.into_string().unwrap())
-      }
-      _ => { 
-        S5Error::new(ErrorKind::Network, "Transport Error. Check your internet connection AND/OR your request object.")
-      }
-    }
-  }
+  // pub fn from_ureq(e: ureq::Error)->Self{
+  //   match e {
+  //     ureq::Error::Status(code, response) => {
+  //       let kind = match code {
+  //           400 => ErrorKind::Input,
+  //           401 => ErrorKind::Key,
+  //           403 => ErrorKind::Key,
+  //           404 => ErrorKind::NoResource,
+  //           409 => ErrorKind::Input,
+  //           _=> ErrorKind::Internal
+  //       };
+  //       S5Error::new(kind, &response.into_string().unwrap())
+  //     }
+  //     _ => { 
+  //       S5Error::new(ErrorKind::Network, "Transport Error. Check your internet connection AND/OR your request object.")
+  //     }
+  //   }
+  // }
 
 }

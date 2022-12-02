@@ -1,6 +1,9 @@
-use ureq;
+use crate::e::{ErrorKind, S5Error};
+use reqwest::{
+    self,
+    header::{HeaderMap, AUTHORIZATION},
+};
 use serde::{Deserialize, Serialize};
-use crate::lib::e::{ErrorKind, S5Error};
 
 // GET http://cyphernode:8888/getmempoolinfo
 /*
@@ -13,9 +16,59 @@ RESPONSE{
   "minrelaytxfee": 1e-05
 }
 */
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MempoolInfo {
+    pub size: i64,
+    pub bytes: i64,
+    pub usage: i64,
+    pub maxmempool: i64,
+    pub mempoolminfee: f64,
+    pub minrelaytxfee: f64,
+}
+impl MempoolInfo {
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<MempoolInfo, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying MempoolInfo",
+            )),
+        }
+    }
+}
+
+pub async fn getmempoolinfo(host: String, jwt: String) -> Result<MempoolInfo, String> {
+    let full_url: String = format!("https://{}/v0/getmempoolinfo", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let client = match reqwest::Client::builder()
+        // add_root_certificate(self, cert: Certificate)
+        .danger_accept_invalid_certs(true)
+        .default_headers(headers)
+        .build()
+    {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+              println!("{}",text);
+              match MempoolInfo::structify(&text) {
+                Ok(result) => Ok(result),
+                Err(e) => Err(e.message),
+            }
+          }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
 
 // GET http://cyphernode:8888/getblockchaininfo
-/* 
+/*
 RESPONSE{
   "chain": "test",
   "blocks": 1486864,
@@ -90,10 +143,3 @@ RESPONSE{
     "id": null
 }
 */
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-}
