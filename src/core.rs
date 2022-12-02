@@ -2,6 +2,7 @@ use crate::e::{ErrorKind, S5Error};
 use reqwest::{
     self,
     header::{HeaderMap, AUTHORIZATION},
+    Certificate,
 };
 use serde::{Deserialize, Serialize};
 
@@ -30,37 +31,38 @@ impl MempoolInfo {
     pub fn structify(stringified: &str) -> Result<MempoolInfo, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
-                ErrorKind::Internal,
-                "Error stringifying MempoolInfo",
-            )),
+            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
         }
     }
 }
 
-pub async fn getmempoolinfo(host: String, jwt: String) -> Result<MempoolInfo, String> {
+pub async fn getmempoolinfo(
+    host: String,
+    jwt: String,
+    cert: Option<Certificate>,
+) -> Result<MempoolInfo, String> {
     let full_url: String = format!("https://{}/v0/getmempoolinfo", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
-    let client = match reqwest::Client::builder()
-        // add_root_certificate(self, cert: Certificate)
-        .danger_accept_invalid_certs(true)
-        .default_headers(headers)
-        .build()
-    {
+
+    let client = if cert.is_some() {
+        reqwest::Client::builder().add_root_certificate(cert.unwrap())
+    } else {
+        reqwest::Client::builder().danger_accept_invalid_certs(true)
+    };
+    let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-
     match client.get(&full_url).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
-              println!("{}",text);
-              match MempoolInfo::structify(&text) {
-                Ok(result) => Ok(result),
-                Err(e) => Err(e.message),
+                println!("{}", text);
+                match MempoolInfo::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
             }
-          }
             Err(e) => Err(e.to_string()),
         },
         Err(e) => Err(e.to_string()),

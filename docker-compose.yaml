@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+    rust:
+      image: rust:buster
+      container_name: cngateway
+      volumes: 
+        - .:/usr/src/cngateway
+      networks:
+        - cyphernodeappsnet
+      command: tail -f "/dev/null"
+
+networks:
+  cyphernodeappsnet:
+    external: true

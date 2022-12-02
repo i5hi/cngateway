@@ -1,6 +1,12 @@
-# cnproxy
+# cngateway
 
 a simple client library for cyphernode gatekeeper
+
+## setup
+
+- add cert.pem to the root directory for tests
+- if you are testing outside the cyphernodeappsnet, only run `cargo test local`
+- if you want to test within the cyphernodeappsnet, use the docker-compose and run `docker exec -it cngateway sh -c 'cargo test cyphernodeappsnet'`
 
 ## usage
 
@@ -54,15 +60,6 @@ pub struct LnConnectFund {
 
 NOTE: Rust uses snake_case for variable and function names. Cyphernode uses camelCase. 
 All datatypes returned will internally be snake_case.
-
-## test
-
-Test with cli output:
-
-```bash
-# Requires an instance of cyphernode running
-cargo test -- --nocapture
-```
 
 ## Current:
 
