@@ -1,15 +1,15 @@
-// mod bitcoin;
+mod bitcoin;
 mod core;
 mod e;
 use reqwest::Certificate;
 mod lightning;
 use serde::{Deserialize, Serialize};
-// pub use bitcoin::{ActiveWatches, UnwatchAddress, WatchAddress,WatchXpub,UnwatchXpub};
-// use bitcoin::{WatchAddressReq, WatchXpubReq};
-use lightning::LnConnectFundReq;
+pub use bitcoin::{WatchAddressReq, WatchXpubReq};
+use bitcoin::{ActiveWatches, UnwatchAddress, WatchAddress,WatchXpub,UnwatchXpub};
+pub use lightning::{LnConnectFundReq,LnWithdrawReq};
 use crate::lightning::{
     LnBolt11, LnConnString, LnConnectFund, LnFundAddress, LnInfo, LnListFunds, LnListPays,
-    LnRoutes, LnWithdraw, LnWithdrawReq,
+    LnRoutes, LnWithdraw
 };
 use crate::core::MempoolInfo;
 
@@ -22,9 +22,7 @@ struct Claims {
     exp: u128,
 }
 
-/// The main client.
-/// ip is the only requirement for initialization.
-/// methods follow the same naming convention as cyphernode proxy api.
+/// The gatekeeper client.
 pub struct CnGateway {
     pub host: String,
     id: String,
@@ -63,6 +61,7 @@ impl CnGateway {
             })
         }
     }
+    /// Internally used to create JWT
     fn auth_token(&self) -> Result<String, String> {
         let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
             Ok(n) => n.as_millis(),
@@ -85,66 +84,70 @@ impl CnGateway {
             Err(_) => Err("Error Encoding JWT!".to_string()),
         }
     }
-
     /// Check mempool info
     pub async fn getmempoolinfo(&self) -> Result<MempoolInfo, String> {
         let jwt = self.auth_token().unwrap();
         core::getmempoolinfo(self.host.clone(), jwt, self.cert.clone()).await
     }
-    // /// Health check
-    // pub async fn ping(&self) -> Result<(), String> {
-    //     proxy::helloworld(self.ip.clone()).await
-    // }
-    // /// Watch a bitcoin address
-    // pub async fn watch(
-    //     &self,
-    //     address: String,
-    //     unconfirmed_callback_url: String,
-    //     confirmed_callback_url: String,
-    //     event_message: String,
-    //     label: String,
-    // ) -> Result<WatchAddress, String> {
-    //     let body = WatchAddressReq::new(
-    //         address,
-    //         unconfirmed_callback_url,
-    //         confirmed_callback_url,
-    //         event_message,
-    //         label,
-    //     );
-    //     bitcoin::watch(self.ip.clone(), body).await
-    // }
-    // /// Unwatch a bitcoin address
-    // pub async fn unwatch(&self, address: String) -> Result<UnwatchAddress, String> {
-    //     bitcoin::unwatch(self.ip.clone(), address).await
-    // }
-    // /// Get addresses currently being watched
-    // pub async fn watchxpub(
-    //     &self,
-    //     label: String,
-    //     pub32: String,
-    //     path: String,
-    //     nstart: i64,
-    //     unconfirmed_callback_url: String,
-    //     confirmed_callback_url: String,
-    // ) -> Result<WatchXpub, String> {
-    //     let body = WatchXpubReq::new(
-    //         label,
-    //         pub32,
-    //         path,
-    //         nstart,
-    //         unconfirmed_callback_url,
-    //         confirmed_callback_url,
-    //     );
-    //     bitcoin::watchxpub(self.ip.clone(), body).await
-    // }
-    // /// Unwatch a bitcoin xpub
-    // pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
-    //     bitcoin::unwatchxpubbyxpub(self.ip.clone(), xpub).await
-    // }
-    // /// Get addresses currently being watched
-    // pub async fn getactivewatches(&self, address: String) -> Result<ActiveWatches, String> {
-    //     bitcoin::getactivewatches(self.ip.clone()).await
-    // }
+    /// Watch a bitcoin address
+    pub async fn watch(
+        &self,
+        address: String,
+        unconfirmed_callback_url: String,
+        confirmed_callback_url: String,
+        event_message: String,
+        label: String,
+    ) -> Result<WatchAddress, String> {
+        let jwt = self.auth_token().unwrap();
+        let body = WatchAddressReq::new(
+            address,
+            unconfirmed_callback_url,
+            confirmed_callback_url,
+            event_message,
+            label,
+        );
+        bitcoin::watch(self.host.clone(), jwt, self.cert.clone(), body).await
+    }
+    /// Unwatch a bitcoin address
+    pub async fn unwatch(&self, address: String) -> Result<UnwatchAddress, String> {
+        let jwt = self.auth_token().unwrap();
+
+        bitcoin::unwatch(self.host.clone(), jwt, self.cert.clone(), address).await
+    }
+    /// Get addresses currently being watched
+    pub async fn watchxpub(
+        &self,
+        label: String,
+        pub32: String,
+        path: String,
+        nstart: i64,
+        unconfirmed_callback_url: String,
+        confirmed_callback_url: String,
+    ) -> Result<WatchXpub, String> {
+        let jwt = self.auth_token().unwrap();
+
+        let body = WatchXpubReq::new(
+            label,
+            pub32,
+            path,
+            nstart,
+            unconfirmed_callback_url,
+            confirmed_callback_url,
+        );
+        bitcoin::watchxpub(self.host.clone(), jwt, self.cert.clone(), body).await
+    }
+    /// Unwatch a bitcoin xpub
+    pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
+        let jwt = self.auth_token().unwrap();
+
+        bitcoin::unwatchxpubbyxpub(self.host.clone(), jwt, self.cert.clone(), xpub).await
+    }
+    /// Get addresses currently being watched
+    pub async fn getactivewatches(&self, address: String) -> Result<ActiveWatches, String> {
+        let jwt = self.auth_token().unwrap();
+
+        bitcoin::getactivewatches(self.host.clone(), jwt, self.cert.clone()).await
+    }
     /// Ln node info
     pub async fn ln_getinfo(&self) -> Result<LnInfo, String> {
         let jwt = self.auth_token().unwrap();
@@ -221,17 +224,7 @@ mod tests {
     use super::*;
     #[tokio::test]
     async fn local_testnet() {
-        // let output = std::process::Command::new("docker")
-        //     .arg("inspect")
-        //     .arg("-f {{ .NetworkSettings.Networks.cyphernodenet.IPAddress }}")
-        //     .arg("cyphernode_gatekeeper_1")
-        //     .output()
-        //     .expect("Failed to execute command");
-
-        // gatekeeper needs to be exposed outside the docker container for this test.
-        // another test needs to be conducted if running inside the cyphernodeappsnet
         let gatekeeper_ip = "localhost:2009".to_string();
-
         let kid = "003".to_string();
         let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
@@ -249,8 +242,6 @@ mod tests {
         println!("{}\n\n{:#?}", cert_path, client.cert);
         let mempool = client.getmempoolinfo().await.unwrap();
         println!("{:#?}", mempool);
-
-        // client.ping().await.unwrap();
 
         let lninfo = client.ln_getinfo().await.unwrap();
         let newaddr = client.ln_newaddr().await.unwrap();
@@ -289,17 +280,7 @@ mod tests {
     }
     #[tokio::test]
     async fn cypherappsnet() {
-        // let output = std::process::Command::new("docker")
-        //     .arg("inspect")
-        //     .arg("-f {{ .NetworkSettings.Networks.cyphernodenet.IPAddress }}")
-        //     .arg("cyphernode_gatekeeper_1")
-        //     .output()
-        //     .expect("Failed to execute command");
-
-        // gatekeeper needs to be exposed outside the docker container for this test.
-        // another test needs to be conducted if running inside the cyphernodeappsnet
         let gatekeeper_ip = "gatekeeper:2009".to_string();
-
         let kid = "003".to_string();
         let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
@@ -310,7 +291,6 @@ mod tests {
             .unwrap();
         println!("{}\n\n{:#?}", cert_path, client.cert);
         let mempool = client.getmempoolinfo().await.unwrap();
-
         println!("{:#?}", mempool);
     }
 }

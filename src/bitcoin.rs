@@ -1,6 +1,6 @@
 use crate::e::{ErrorKind, S5Error};
 use serde_derive::{Deserialize, Serialize};
-use reqwest;
+use reqwest::{self,Certificate};
 
 // POST http://cyphernode/watch
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -68,13 +68,30 @@ impl WatchAddress {
     }
 }
 
-pub async fn watch(ip: String, body: WatchAddressReq) -> Result<WatchAddress, String> {
-    let full_url: String = format!("http://{}/watch", ip).to_string();
+pub async fn watch(host: String, jwt: String, cert: Option<Certificate>, body: WatchAddressReq) -> Result<WatchAddress, String> {
+    let full_url: String = format!("https://{}/v0/watch", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    match ureq::post(&full_url).send_json(body.stringify()) {
-        Ok(response) => match WatchAddress::structify(&response.into_string().unwrap()) {
-            Ok(result) => Ok(result),
-            Err(e) => Err(e.message),
+    let client = if cert.is_some() {
+        reqwest::Client::builder().add_root_certificate(cert.unwrap())
+    } else {
+        reqwest::Client::builder().danger_accept_invalid_certs(true)
+    };
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match WatchAddress::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
         },
         Err(e) => Err(e.to_string()),
     }
@@ -112,12 +129,30 @@ pub struct Watch {
     pub event_message: String,
 }
 
-pub async fn getactivewatches(ip: String) -> Result<ActiveWatches, String> {
-  let full_url: String = format!("http://{}/getactivewatches", ip).to_string();
-  match ureq::get(&full_url).call() {
-      Ok(response) => match ActiveWatches::structify(&response.into_string().unwrap()) {
-          Ok(result) => Ok(result),
-          Err(e) => Err(e.message),
+pub async fn getactivewatches(host: String, jwt: String, cert: Option<Certificate>) -> Result<ActiveWatches, String> {
+  let full_url: String = format!("https://{}/v0/getactivewatches", host).to_string();
+  let mut headers = HeaderMap::new();
+  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+
+  let client = if cert.is_some() {
+      reqwest::Client::builder().add_root_certificate(cert.unwrap())
+  } else {
+      reqwest::Client::builder().danger_accept_invalid_certs(true)
+  };
+  let client = match client.default_headers(headers).build() {
+      Ok(result) => result,
+      Err(e) => return Err(e.to_string()),
+  };
+  match client.get(&full_url).send().await {
+      Ok(response) => match response.text().await {
+          Ok(text) => {
+              println!("{}", text);
+              match ActiveWatches::structify(&text) {
+                  Ok(result) => Ok(result),
+                  Err(e) => Err(e.message),
+              }
+          }
+          Err(e) => Err(e.to_string()),
       },
       Err(e) => Err(e.to_string()),
   }
@@ -153,15 +188,34 @@ impl UnwatchAddress {
       }
   }
 }
-pub async fn unwatch(ip: String, address:String) -> Result<UnwatchAddress, String> {
-  let full_url: String = format!("http://{}/unwatch/{}", ip,address).to_string();
-  match ureq::get(&full_url).call() {
-      Ok(response) => match UnwatchAddress::structify(&response.into_string().unwrap()) {
-          Ok(result) => Ok(result),
-          Err(e) => Err(e.message),
-      },
-      Err(e) => Err(e.to_string()),
-  }
+pub async fn unwatch(host: String, jwt: String, cert: Option<Certificate>, address:String) -> Result<UnwatchAddress, String> {
+    let full_url: String = format!("https://{}/v0/unwatch/{}", host,address).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+  
+    let client = if cert.is_some() {
+        reqwest::Client::builder().add_root_certificate(cert.unwrap())
+    } else {
+        reqwest::Client::builder().danger_accept_invalid_certs(true)
+    };
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match UnwatchAddress::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+ 
 }
 // GET http://cyphernode/get_txns_by_watchlabel/Label
 /*
@@ -272,15 +326,34 @@ impl WatchXpub {
   }
 }
 
-pub async fn watchxpub(ip: String, body: WatchXpubReq) -> Result<WatchXpub, String> {
-  let full_url: String = format!("http://{}/watch", ip).to_string();
-  match ureq::post(&full_url).send_json(body.stringify()) {
-      Ok(response) => match WatchXpub::structify(&response.into_string().unwrap()) {
-          Ok(result) => Ok(result),
-          Err(e) => Err(e.message),
-      },
-      Err(e) => Err(e.to_string()),
-  }
+pub async fn watchxpub(host: String, token: String, cert: Option<Certificate>, body: WatchXpubReq) -> Result<WatchXpub, String> {
+    let full_url: String = format!("https://{}/v0/watch", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+  
+    let client = if cert.is_some() {
+        reqwest::Client::builder().add_root_certificate(cert.unwrap())
+    } else {
+        reqwest::Client::builder().danger_accept_invalid_certs(true)
+    };
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match WatchXpub::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+
 }
 
 // GET http://cyphernode/unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
@@ -303,15 +376,34 @@ impl UnwatchXpub {
       }
   }
 }
-pub async fn unwatchxpubbyxpub(ip: String, xpub: String) -> Result<UnwatchXpub, String> {
-  let full_url: String = format!("http://{}/unwatchxpubbyxpub/{}", ip,xpub).to_string();
-  match ureq::get(&full_url).call() {
-      Ok(response) => match UnwatchXpub::structify(&response.into_string().unwrap()) {
-          Ok(result) => Ok(result),
-          Err(e) => Err(e.message),
-      },
-      Err(e) => Err(e.to_string()),
-  }
+pub async fn unwatchxpubbyxpub(host: String, jwt: String, cert: Option<Certificate>, xpub: String) -> Result<UnwatchXpub, String> {
+    let full_url: String = format!("https://{}/v0/unwatchxpubbyxpub/{}", host,xpub).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+  
+    let client = if cert.is_some() {
+        reqwest::Client::builder().add_root_certificate(cert.unwrap())
+    } else {
+        reqwest::Client::builder().danger_accept_invalid_certs(true)
+    };
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match WatchXpub::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    } 
+
 }
 
 // GET http://cyphernode/getactivexpubwatches

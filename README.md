@@ -61,12 +61,66 @@ pub struct LnConnectFund {
 NOTE: Rust uses snake_case for variable and function names. Cyphernode uses camelCase. 
 All datatypes returned will internally be snake_case.
 
-## Current:
+## API
 
-- Lightning (in progress)
-
-## Pending
-
-- Watcher
-- Batcher 
-- Bitcoin
+- [x] POST http://cyphernode:8888/watch
+- [x] GET http://cyphernode:8888/unwatch/2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp
+- [x] GET http://cyphernode:8888/getactivewatches
+- [ ] GET http://cyphernode:8888/get_txns_by_watchlabel/Label
+- [ ] GET http://cyphernode:8888/get_unused_addresses_by_watchlabel/Label
+- [x] POST http://cyphernode:8888/watchxpub
+- [x] GET http://cyphernode:8888/unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
+- [ ] GET http://cyphernode:8888/unwatchxpubbylabel/4421
+- [ ] POST http://cyphernode:8888/watchtxid
+- [] GET http://cyphernode:8888/getactivexpubwatches
+- [ ] GET http://cyphernode:8888/getactivewatchesbyxpub/tpubD6NzVbkrYhZ4YR3QK2tyfMMvBghAvqtNaNK1LTyDWcRHLcMUm3ZN2cGm5BS3MhCRCeCkXQkTXXjiJgqxpqXK7PeUSp86DTTgkLpcjMtpKWk
+- [ ] GET http://cyphernode:8888/getactivewatchesbylabel/2219
+- [ ] GET http://cyphernode:8888/conf/b081ca7724386f549cf0c16f71db6affeb52ff7a0d9b606fb2e5c43faffd3387
+- [ ] GET http://cyphernode:8888/getmempoolinfo
+- [ ] GET http://cyphernode:8888/getblockchaininfo
+- [ ] GET http://cyphernode:8888/getblockhash/593104
+- [ ] GET http://cyphernode:8888/getbestblockhash
+- [ ] GET http://cyphernode:8888/getblockinfo/000000006f82a384c208ecfa04d05beea02d420f3f398ddda5c7f900de5718ea
+- [ ] GET http://cyphernode:8888/getbestblockinfo
+- [ ] GET http://cyphernode:8888/gettransaction/af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648
+- [ ] GET http://cyphernode:8888/executecallbacks
+- [ ] GET http://cyphernode:8888/get_txns_spending
+- [ ] GET http://cyphernode:8888/getbalance
+- [ ] GET http://cyphernode:8888/getbalances
+- [ ] GET http://cyphernode:8888/getnewaddress/bech32
+- [ ] POST http://cyphernode:8888/getnewaddress (with label)
+- [ ] GET http://cyphernode:8888/validateaddress/address
+- [ ] POST http://cyphernode:8888/spend
+- [ ] POST http://cyphernode:8888/bumpfee
+- [ ] GET http://cyphernode:8888/batchspend
+- [ ] GET http://cyphernode:8888/deriveindex/25-30
+- [ ] POST http://cyphernode:8888/derivepubpath
+- [ ] GET http://cyphernode:8888/deriveindex_bitcoind/25-30
+- [ ] POST http://cyphernode:8888/derivepubpath_bitcoind
+- [x] GET http://cyphernode:8888/ln_getinfo
+- [ ] POST http://cyphernode:8888/ln_create_invoice
+- [ ] POST http://cyphernode:8888/ln_pay
+- [x] GET http://cyphernode:8888/ln_newaddr
+- [x] GET http://cyphernode:8888/ln_getconnectionstring
+- [x] POST http://cyphernode:8888/ln_connectfund
+- [ ] GET http://cyphernode:8888/ln_getinvoice/label
+- [ ] GET http://cyphernode:8888/ln_delinvoice/label
+- [x] GET http://cyphernode:8888/ln_decodebolt11/bolt11
+- [ ] GET http://cyphernode:8888/ln_listpeers
+- [x] GET http://cyphernode:8888/ln_listfunds
+- [x] GET http://cyphernode:8888/ln_listpays
+- [x] GET http://cyphernode:8888/ln_getroute/<node_id>/<msatoshi>/<?riskfactor>
+- [x] POST http://192.168.111.152:8080/ln_withdraw
+- [ ] POST http://cyphernode:8888/ots_stamp
+- [ ] GET http://cyphernode:8888/ots_getfile/1ddfb769eb0b8876bc570e25580e6a53afcf973362ee1ee4b54a807da2e5eed7
+- [ ] POST http://cyphernode:8888/ots_verify
+- [ ] POST http://cyphernode:8888/ots_info
+- [ ] POST http://cyphernode:8888/createbatcher
+- [ ] POST http://cyphernode:8888/updatebatcher
+- [ ] POST http://cyphernode:8888/addtobatch
+- [ ] POST http://cyphernode:8888/removefrombatch
+- [ ] POST http://cyphernode:8888/batchspend
+- [ ] POST http://cyphernode:8888/getbatcher
+- [ ] POST http://cyphernode:8888/getbatchdetails
+- [ ] GET http://cyphernode:8888/listbatchers
+- [ ] POST http://cyphernode:8888/bitcoin_estimatesmartfee
