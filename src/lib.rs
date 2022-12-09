@@ -143,7 +143,7 @@ impl CnGateway {
         bitcoin::unwatchxpubbyxpub(self.host.clone(), jwt, self.cert.clone(), xpub).await
     }
     /// Get addresses currently being watched
-    pub async fn getactivewatches(&self, address: String) -> Result<ActiveWatches, String> {
+    pub async fn getactivewatches(&self) -> Result<ActiveWatches, String> {
         let jwt = self.auth_token().unwrap();
 
         bitcoin::getactivewatches(self.host.clone(), jwt, self.cert.clone()).await

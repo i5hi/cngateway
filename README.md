@@ -72,7 +72,7 @@ All datatypes returned will internally be snake_case.
 - [x] GET unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
 - [ ] GET unwatchxpubbylabel/4421
 - [ ] POST watchtxid
-- [] GET getactivexpubwatches
+- [ ] GET getactivexpubwatches
 - [ ] GET getactivewatchesbyxpub/tpubD6NzVbkrYhZ4YR3QK2tyfMMvBghAvqtNaNK1LTyDWcRHLcMUm3ZN2cGm5BS3MhCRCeCkXQkTXXjiJgqxpqXK7PeUSp86DTTgkLpcjMtpKWk
 - [ ] GET getactivewatchesbylabel/2219
 - [ ] GET conf/b081ca7724386f549cf0c16f71db6affeb52ff7a0d9b606fb2e5c43faffd3387

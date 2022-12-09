@@ -1,6 +1,6 @@
 use crate::e::{ErrorKind, S5Error};
 use serde_derive::{Deserialize, Serialize};
-use reqwest::{self,Certificate};
+use reqwest::{self, header::{HeaderMap, AUTHORIZATION}, Certificate};
 
 // POST http://cyphernode/watch
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -326,7 +326,7 @@ impl WatchXpub {
   }
 }
 
-pub async fn watchxpub(host: String, token: String, cert: Option<Certificate>, body: WatchXpubReq) -> Result<WatchXpub, String> {
+pub async fn watchxpub(host: String, jwt: String, cert: Option<Certificate>, body: WatchXpubReq) -> Result<WatchXpub, String> {
     let full_url: String = format!("https://{}/v0/watch", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
@@ -394,7 +394,7 @@ pub async fn unwatchxpubbyxpub(host: String, jwt: String, cert: Option<Certifica
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match WatchXpub::structify(&text) {
+                match UnwatchXpub::structify(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -466,7 +466,3 @@ ONECONF{
 */
 //
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-}
