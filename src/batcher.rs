@@ -1,7 +1,27 @@
-use crate::lib::e::{ErrorKind, S5Error};
-use serde::{Deserialize, Serialize};
-use ureq;
+use crate::e::{ErrorKind, S5Error};
+use serde_derive::{Deserialize, Serialize};
+use reqwest::{self, header::{HeaderMap, AUTHORIZATION}, Certificate};
+use serde_json::Value;
+use std::collections::HashMap;
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ResponseType {
+  Create(CreateBatcherResponse),
+  Update(UpdateBatchResponse),
+  Add(BatchInfoResponse),
+  Remove(BatchInfoResponse),
+  Get(BatchInfoResponse),
+  GetDetail(BatchDetailResponse),
+  Spend(BatchSpendResponse),
+  List(ListBatchersResponse),
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatcherRespoonse {
+    pub result: ResponseType,
+    pub error: Value,
+}
 
 // ip=$(docker container inspect -f '{{ .NetworkSettings.Networks.cyphernodenet.IPAddress }}' cyphernode_proxy_1)
 // POST http://$ip:8888/createbatcher
@@ -17,6 +37,18 @@ RESPONSE{
   "error": null
 }
 */
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateBatcherRequest {
+    pub batcher_label: String,
+    pub conf_target: u64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateBatcherResponse {
+    pub batcher_id: u64,
+}
 
 // POST http://cyphernode:8888/updatebatcher
 /*
@@ -33,7 +65,21 @@ RESPONSE{
   "error": null
 }
 */
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateBatchRequest {
+  pub batcher_label: Option<String>,
+  pub batcher_id: Option<String>,
+  pub conf_target: u64,
+}
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateBatchResponse {
+  pub batcher_label: String,
+  pub batcher_id: String,
+  pub conf_target: u64,
+}
 // POST http://cyphernode:8888/addtobatch
 /*
 REQUEST{
@@ -53,25 +99,38 @@ RESPONSE{
   "error": null
 }
 */
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddToBatchRequest {
+    pub address: String,
+    pub amount: f64,
+    pub batcher_label: Option<String>,
+    pub webhook_url: Option<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchInfoResponse {
+    pub batcher_id: u64,
+    pub output_id: u64,
+    pub nb_outputs: u64,
+    pub oldest: String,
+    pub total: f64,
+}
 
 // POST http://cyphernode:8888/removefrombatch
 /*
 REQUEST{
     "outputId":72
 }
-RESPONSE{
-  "result": {
-    "batcherId": 1,
-    "outputId": 72,
-    "nbOutputs": 6,
-    "oldest": "2020-09-09 14:00:01",
-    "total": 0.03783971
-  },
-  "error": null
-}
+RESPONSE- SAME AS ADD
 
 */
-
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoveFromBatchRequest {
+  pub output_id: u64,
+}
 
 // POST http://cyphernode:8888/getbatcher
 /*
@@ -94,6 +153,14 @@ RESPONSE{
   "error": null
 }
 */
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetBatchRequest {
+  pub batcher_label: Option<String>,
+  pub batcher_id: Option<String>,
+}
+
 // POST http://cyphernode:8888/getbatchdetails
 /*
 REQUEST{
@@ -131,6 +198,39 @@ RESPONSE{
 }
 */
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetBatchDetailRequest {
+  pub batcher_id: i64,
+  pub batcher_label: Option<String>,
+  pub txid: Option<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchDetailResponse {
+    pub batcher_id: i64,
+    pub batcher_label: String,
+    pub conf_target: i64,
+    pub nb_outputs: i64,
+    pub oldest: i64,
+    pub total: f64,
+    pub txid: String,
+    pub hash: String,
+    pub details: Details,
+    pub outputs: HashMap<String,f64>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Details {
+    pub firstseen: i64,
+    pub size: i64,
+    pub vsize: i64,
+    pub replaceable: bool,
+    pub fee: f64,
+}
+
+
 // GET http://cyphernode:8888/listbatchers
 /*
 RESPONSE{
@@ -142,6 +242,18 @@ RESPONSE{
   "error": null
 }
 */
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListBatchersResponse {
+    pub batcher_id: i64,
+    pub batcher_label: String,
+    pub conf_target: i64,
+    pub nb_outputs: i64,
+    pub oldest: i64,
+    pub total: f64,
+}
+
 // GET http://cyphernode:8888/batchspend
 /*
 RESPONSE{
@@ -150,7 +262,17 @@ RESPONSE{
 }
 
 */
-#[cfg(test)]
-mod tests {
-    use super::*;
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSpendRequest {
+  pub batcher_label: Option<String>,
+  pub batcher_id: Option<String>,
+  pub conf_target: Option<u64>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BatchSpendResponse {
+  pub status: String,
+  pub hash: String,
 }

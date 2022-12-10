@@ -3,6 +3,8 @@ mod core;
 mod e;
 use reqwest::Certificate;
 mod lightning;
+mod batcher;
+use batcher::{CreateBatcherResponse, CreateBatcherRequest, UpdateBatchResponse, UpdateBatchRequest, BatchInfoResponse, AddToBatchRequest, RemoveFromBatchRequest, BatchDetailResponse, ListBatchersResponse, BatchSpendResponse, BatchSpendRequest, GetBatchRequest, GetBatchDetailRequest};
 use serde::{Deserialize, Serialize};
 pub use bitcoin::{WatchAddressReq, WatchXpubReq};
 use bitcoin::{ActiveWatches, UnwatchAddress, WatchAddress,WatchXpub,UnwatchXpub};
@@ -90,6 +92,50 @@ impl CnGateway {
         core::getmempoolinfo(self.host.clone(), jwt, self.cert.clone()).await
     }
     /// Watch a bitcoin address
+    // FOR BUY ORDERS:
+    pub async fn createbatcher(&self)->Result<CreateBatcherResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = CreateBatcherRequest::default();
+        batcher::createbatcher(self.host.clone(), jwt, self.cert.clone(), request).await
+    }
+    pub async fn updatebatcher(&self)->Result<UpdateBatchResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = UpdateBatchRequest::default();
+        batcher::updatebatcher(self.host.clone(), jwt, self.cert.clone(), request).await
+    }
+    pub async fn addtobatch(&self)->Result<BatchInfoResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = AddToBatchRequest::default();
+        batcher::addtobatch(self.host.clone(), jwt, self.cert.clone(),request).await
+    }
+    pub async fn removefrombatch(&self)->Result<BatchInfoResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = RemoveFromBatchRequest::default();
+        batcher::removefrombatch(self.host.clone(), jwt, self.cert.clone(),request).await
+    }
+    pub async fn getbatcher(&self)->Result<BatchInfoResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = GetBatchRequest::default();
+        batcher::getbatcher(self.host.clone(), jwt, self.cert.clone(),request).await
+    }
+    pub async fn getbatchdetails(&self)->Result<BatchDetailResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = GetBatchDetailRequest::default();
+        batcher::getbatchdetails(self.host.clone(), jwt, self.cert.clone(),request).await
+    }
+    pub async fn listbatchers(&self)->Result<ListBatchersResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        batcher::listbatchers(self.host.clone(), jwt, self.cert.clone()).await
+    }
+    pub async fn batchspend(&self)->Result<BatchSpendResponse,String>{
+        let jwt = self.auth_token().unwrap();
+        let request = BatchSpendRequest::default();
+        batcher::batchspend(self.host.clone(), jwt, self.cert.clone(),request).await
+    }
+    
+    
+    // FOR SELL ORDERS:
+
     pub async fn watch(
         &self,
         address: String,
@@ -145,7 +191,6 @@ impl CnGateway {
     /// Get addresses currently being watched
     pub async fn getactivewatches(&self) -> Result<ActiveWatches, String> {
         let jwt = self.auth_token().unwrap();
-
         bitcoin::getactivewatches(self.host.clone(), jwt, self.cert.clone()).await
     }
     /// Ln node info
