@@ -2,18 +2,23 @@ mod bitcoin;
 mod core;
 mod e;
 use reqwest::Certificate;
-mod lightning;
 mod batcher;
-use batcher::{CreateBatcherResponse, CreateBatcherRequest, UpdateBatchResponse, UpdateBatchRequest, BatchInfoResponse, AddToBatchRequest, RemoveFromBatchRequest, BatchDetailResponse, ListBatchersResponse, BatchSpendResponse, BatchSpendRequest, GetBatchRequest, GetBatchDetailRequest};
-use serde::{Deserialize, Serialize};
-pub use bitcoin::{WatchAddressReq, WatchXpubReq};
-use bitcoin::{ActiveWatches, UnwatchAddress, WatchAddress,WatchXpub,UnwatchXpub};
-pub use lightning::{LnConnectFundReq,LnWithdrawReq};
+mod lightning;
+use crate::core::MempoolInfo;
 use crate::lightning::{
     LnBolt11, LnConnString, LnConnectFund, LnFundAddress, LnInfo, LnListFunds, LnListPays,
-    LnRoutes, LnWithdraw
+    LnRoutes, LnWithdraw,
 };
-use crate::core::MempoolInfo;
+use batcher::{
+    AddToBatchRequest, BatchDetailResponse, BatchInfoResponse, BatchSpendRequest,
+    BatchSpendResponse, CreateBatcherRequest, CreateBatcherResponse, GetBatchDetailRequest,
+    GetBatcherRequest, ListBatchersResponse, RemoveFromBatchRequest,
+    UpdateBatcherRequest, UpdateBatcherResponse,
+};
+use bitcoin::{ActiveWatches, UnwatchAddress, UnwatchXpub, WatchAddress, WatchXpub};
+pub use bitcoin::{WatchAddressReq, WatchXpubReq};
+pub use lightning::{LnConnectFundReq, LnWithdrawReq};
+use serde::{Deserialize, Serialize};
 
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use std::time::SystemTime;
@@ -93,47 +98,75 @@ impl CnGateway {
     }
     /// Watch a bitcoin address
     // FOR BUY ORDERS:
-    pub async fn createbatcher(&self)->Result<CreateBatcherResponse,String>{
+    pub async fn createbatcher(
+        &self,
+        batcher_label: String,
+        conf_target: u64,
+    ) -> Result<CreateBatcherResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = CreateBatcherRequest::default();
+        let request = CreateBatcherRequest::new(batcher_label, conf_target);
         batcher::createbatcher(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn updatebatcher(&self)->Result<UpdateBatchResponse,String>{
+    pub async fn updatebatcher(
+        &self,
+        batcher_label: Option<String>,
+        batcher_id: Option<String>,
+        conf_target: u64,
+    ) -> Result<UpdateBatcherResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = UpdateBatchRequest::default();
+        let request = UpdateBatcherRequest::new(batcher_label, batcher_id, conf_target);
         batcher::updatebatcher(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn addtobatch(&self)->Result<BatchInfoResponse,String>{
+    pub async fn addtobatch(
+        &self,
+        address: String,
+        amount: f64,
+        batcher_label: Option<String>,
+        webhook_url: Option<String>,
+    ) -> Result<BatchInfoResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = AddToBatchRequest::default();
-        batcher::addtobatch(self.host.clone(), jwt, self.cert.clone(),request).await
+        let request = AddToBatchRequest::new(address, amount, batcher_label, webhook_url);
+        batcher::addtobatch(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn removefrombatch(&self)->Result<BatchInfoResponse,String>{
+    pub async fn removefrombatch(&self, output_id: u64) -> Result<BatchInfoResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = RemoveFromBatchRequest::default();
-        batcher::removefrombatch(self.host.clone(), jwt, self.cert.clone(),request).await
+        let request = RemoveFromBatchRequest::new(output_id);
+        batcher::removefrombatch(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn getbatcher(&self)->Result<BatchInfoResponse,String>{
+    pub async fn getbatcher(
+        &self,
+        batcher_label: Option<String>,
+        batcher_id: Option<String>,
+    ) -> Result<BatchInfoResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = GetBatchRequest::default();
-        batcher::getbatcher(self.host.clone(), jwt, self.cert.clone(),request).await
+        let request = GetBatcherRequest::new(batcher_label, batcher_id);
+        batcher::getbatcher(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn getbatchdetails(&self)->Result<BatchDetailResponse,String>{
+    pub async fn getbatchdetails(
+        &self,
+        batcher_id: u64,
+        batcher_label: Option<String>,
+        txid: Option<String>,
+    ) -> Result<BatchDetailResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = GetBatchDetailRequest::default();
-        batcher::getbatchdetails(self.host.clone(), jwt, self.cert.clone(),request).await
+        let request = GetBatchDetailRequest::new(batcher_id, batcher_label, txid);
+        batcher::getbatchdetails(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    pub async fn listbatchers(&self)->Result<ListBatchersResponse,String>{
+    pub async fn listbatchers(&self) -> Result<ListBatchersResponse, String> {
         let jwt = self.auth_token().unwrap();
         batcher::listbatchers(self.host.clone(), jwt, self.cert.clone()).await
     }
-    pub async fn batchspend(&self)->Result<BatchSpendResponse,String>{
+    pub async fn batchspend(
+        &self,
+        batcher_label: Option<String>,
+        batcher_id: Option<String>,
+        conf_target: Option<u64>,
+    ) -> Result<BatchSpendResponse, String> {
         let jwt = self.auth_token().unwrap();
-        let request = BatchSpendRequest::default();
-        batcher::batchspend(self.host.clone(), jwt, self.cert.clone(),request).await
+        let request = BatchSpendRequest::new(batcher_label, batcher_id, conf_target);
+        batcher::batchspend(self.host.clone(), jwt, self.cert.clone(), request).await
     }
-    
-    
+
     // FOR SELL ORDERS:
 
     pub async fn watch(
@@ -249,7 +282,15 @@ impl CnGateway {
     ) -> Result<LnRoutes, String> {
         let jwt = self.auth_token().unwrap();
 
-        lightning::ln_getroute(self.host.clone(), jwt, self.cert.clone(), node_id, msatoshis, risk_factor).await
+        lightning::ln_getroute(
+            self.host.clone(),
+            jwt,
+            self.cert.clone(),
+            node_id,
+            msatoshis,
+            risk_factor,
+        )
+        .await
     }
     /// Withdraw funds from channel back on main chain
     pub async fn ln_withdraw(
@@ -275,9 +316,14 @@ mod tests {
         let project_path = env!("CARGO_MANIFEST_DIR");
         let cert_path = format!("{}/cert.pem", project_path);
 
-        let client = CnGateway::new(gatekeeper_ip.clone(), kid.clone(), key.clone(), Some(cert_path.clone()))
-            .await
-            .unwrap();
+        let client = CnGateway::new(
+            gatekeeper_ip.clone(),
+            kid.clone(),
+            key.clone(),
+            Some(cert_path.clone()),
+        )
+        .await
+        .unwrap();
 
         println!("{}\n\n{:#?}", cert_path, client.cert);
         let mempool = client.getmempoolinfo().await.unwrap();
