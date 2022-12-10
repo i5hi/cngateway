@@ -39,17 +39,13 @@ impl MempoolInfo {
 pub async fn getmempoolinfo(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
 ) -> Result<MempoolInfo, String> {
     let full_url: String = format!("https://{}/v0/getmempoolinfo", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),

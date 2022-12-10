@@ -1,6 +1,10 @@
 use crate::e::{ErrorKind, S5Error};
+use reqwest::{
+    self,
+    header::{HeaderMap, AUTHORIZATION},
+    Certificate,
+};
 use serde_derive::{Deserialize, Serialize};
-use reqwest::{self, header::{HeaderMap, AUTHORIZATION}, Certificate};
 
 // POST http://cyphernode/watch
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -68,16 +72,17 @@ impl WatchAddress {
     }
 }
 
-pub async fn watch(host: String, jwt: String, cert: Option<Certificate>, body: WatchAddressReq) -> Result<WatchAddress, String> {
+pub async fn watch(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: WatchAddressReq,
+) -> Result<WatchAddress, String> {
     let full_url: String = format!("https://{}/v0/watch", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -103,16 +108,16 @@ pub struct ActiveWatches {
     pub watches: Vec<Watch>,
 }
 impl ActiveWatches {
-  /// Used internally to convert api json string to native struct
-  pub fn structify(stringified: &str) -> Result<ActiveWatches, S5Error> {
-      match serde_json::from_str(stringified) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying ActiveWatches",
-          )),
-      }
-  }
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<ActiveWatches, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying ActiveWatches",
+            )),
+        }
+    }
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -129,33 +134,33 @@ pub struct Watch {
     pub event_message: String,
 }
 
-pub async fn getactivewatches(host: String, jwt: String, cert: Option<Certificate>) -> Result<ActiveWatches, String> {
-  let full_url: String = format!("https://{}/v0/getactivewatches", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+pub async fn getactivewatches(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+) -> Result<ActiveWatches, String> {
+    let full_url: String = format!("https://{}/v0/getactivewatches", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  match client.get(&full_url).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match ActiveWatches::structify(&text) {
-                  Ok(result) => Ok(result),
-                  Err(e) => Err(e.message),
-              }
-          }
-          Err(e) => Err(e.to_string()),
-      },
-      Err(e) => Err(e.to_string()),
-  }
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match ActiveWatches::structify(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
 }
 // GET http://cyphernode/unwatch/2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp
 /*
@@ -177,27 +182,28 @@ pub struct UnwatchAddress {
     pub confirmed_callback_url: String,
 }
 impl UnwatchAddress {
-  /// Used internally to convert api json string to native struct
-  pub fn structify(stringified: &str) -> Result<UnwatchAddress, S5Error> {
-      match serde_json::from_str(stringified) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying UnwatchAddress",
-          )),
-      }
-  }
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<UnwatchAddress, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying UnwatchAddress",
+            )),
+        }
+    }
 }
-pub async fn unwatch(host: String, jwt: String, cert: Option<Certificate>, address:String) -> Result<UnwatchAddress, String> {
-    let full_url: String = format!("https://{}/v0/unwatch/{}", host,address).to_string();
+pub async fn unwatch(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    address: String,
+) -> Result<UnwatchAddress, String> {
+    let full_url: String = format!("https://{}/v0/unwatch/{}", host, address).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
-  
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -215,7 +221,6 @@ pub async fn unwatch(host: String, jwt: String, cert: Option<Certificate>, addre
         },
         Err(e) => Err(e.to_string()),
     }
- 
 }
 // GET http://cyphernode/get_txns_by_watchlabel/Label
 /*
@@ -270,34 +275,33 @@ pub struct WatchXpubReq {
     pub confirmed_callback_url: String,
 }
 impl WatchXpubReq {
-  pub fn new(
-      label: String,
-      pub32: String,
-      path: String,
-      nstart: i64,
-      unconfirmed_callback_url: String,
-      confirmed_callback_url: String,
-
-  ) -> Self {
-      WatchXpubReq {
-        label,
-        pub32,
-        path,
-        nstart,
-        unconfirmed_callback_url,
-        confirmed_callback_url,
-      }
-  }
-  /// Used internally to convert to native struct to api json string
-  pub fn stringify(&self) -> Result<String, S5Error> {
-      match serde_json::to_string(&self.clone()) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying WatchXpubReq",
-          )),
-      }
-  }
+    pub fn new(
+        label: String,
+        pub32: String,
+        path: String,
+        nstart: i64,
+        unconfirmed_callback_url: String,
+        confirmed_callback_url: String,
+    ) -> Self {
+        WatchXpubReq {
+            label,
+            pub32,
+            path,
+            nstart,
+            unconfirmed_callback_url,
+            confirmed_callback_url,
+        }
+    }
+    /// Used internally to convert to native struct to api json string
+    pub fn stringify(&self) -> Result<String, S5Error> {
+        match serde_json::to_string(&self.clone()) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying WatchXpubReq",
+            )),
+        }
+    }
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -314,28 +318,29 @@ pub struct WatchXpub {
     pub confirmed_callback_url: String,
 }
 impl WatchXpub {
-  /// Used internally to convert api json string to native struct
-  pub fn structify(stringified: &str) -> Result<WatchXpub, S5Error> {
-      match serde_json::from_str(stringified) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying WatchXpub",
-          )),
-      }
-  }
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<WatchXpub, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying WatchXpub",
+            )),
+        }
+    }
 }
 
-pub async fn watchxpub(host: String, jwt: String, cert: Option<Certificate>, body: WatchXpubReq) -> Result<WatchXpub, String> {
+pub async fn watchxpub(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: WatchXpubReq,
+) -> Result<WatchXpub, String> {
     let full_url: String = format!("https://{}/v0/watch", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
-  
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -353,7 +358,6 @@ pub async fn watchxpub(host: String, jwt: String, cert: Option<Certificate>, bod
         },
         Err(e) => Err(e.to_string()),
     }
-
 }
 
 // GET http://cyphernode/unwatchxpubbyxpub/upub57Wa4MvRPNyAhxr578mQUdPr6MHwpg3Su875hj8K75AeUVZLXtFeiP52BrhNqDg93gjALU1MMh5UPRiiQPrwiTiuBBBRHzeyBMgrbwkmmkq
@@ -365,27 +369,28 @@ pub struct UnwatchXpub {
     pub pub32: String,
 }
 impl UnwatchXpub {
-  /// Used internally to convert api json string to native struct
-  pub fn structify(stringified: &str) -> Result<UnwatchXpub, S5Error> {
-      match serde_json::from_str(stringified) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying UnwatchXpub",
-          )),
-      }
-  }
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<UnwatchXpub, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying UnwatchXpub",
+            )),
+        }
+    }
 }
-pub async fn unwatchxpubbyxpub(host: String, jwt: String, cert: Option<Certificate>, xpub: String) -> Result<UnwatchXpub, String> {
-    let full_url: String = format!("https://{}/v0/unwatchxpubbyxpub/{}", host,xpub).to_string();
+pub async fn unwatchxpubbyxpub(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    xpub: String,
+) -> Result<UnwatchXpub, String> {
+    let full_url: String = format!("https://{}/v0/unwatchxpubbyxpub/{}", host, xpub).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
-  
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -402,8 +407,7 @@ pub async fn unwatchxpubbyxpub(host: String, jwt: String, cert: Option<Certifica
             Err(e) => Err(e.to_string()),
         },
         Err(e) => Err(e.to_string()),
-    } 
-
+    }
 }
 
 // GET http://cyphernode/getactivexpubwatches
@@ -465,4 +469,3 @@ ONECONF{
 }
 */
 //
-

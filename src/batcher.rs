@@ -26,15 +26,15 @@ pub struct BatcherRespoonse {
     pub error: Option<String>,
 }
 impl BatcherRespoonse {
-  pub fn structify(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
-      match serde_json::from_str(stringified) {
-          Ok(result) => Ok(result),
-          Err(_) => Err(S5Error::new(
-              ErrorKind::Internal,
-              "Error stringifying BatcherRespoonse",
-          )),
-      }
-  }
+    pub fn structify(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying BatcherRespoonse",
+            )),
+        }
+    }
 }
 // ip=$(docker container inspect -f '{{ .NetworkSettings.Networks.cyphernodenet.IPAddress }}' cyphernode_proxy_1)
 // POST http://$ip:8888/createbatcher
@@ -63,7 +63,6 @@ impl CreateBatcherRequest {
             conf_target,
         }
     }
-
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -84,46 +83,41 @@ impl CreateBatcherResponse {
 }
 
 pub async fn createbatcher(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: CreateBatcherRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: CreateBatcherRequest,
 ) -> Result<CreateBatcherResponse, String> {
-  let full_url: String = format!("https://{}/v0/createbatcher", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/createbatcher", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Create(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Create(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // POST http://cyphernode:8888/updatebatcher
 /*
@@ -159,7 +153,6 @@ impl UpdateBatcherRequest {
             conf_target,
         }
     }
-
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -181,46 +174,41 @@ impl UpdateBatcherResponse {
 }
 
 pub async fn updatebatcher(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: UpdateBatcherRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: UpdateBatcherRequest,
 ) -> Result<UpdateBatcherResponse, String> {
-  let full_url: String = format!("https://{}/v0/updatebatcher", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/updatebatcher", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Update(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Update(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // POST http://cyphernode:8888/addtobatch
 /*
@@ -263,7 +251,6 @@ impl AddToBatchRequest {
             webhook_url,
         }
     }
-
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -287,46 +274,41 @@ impl BatchInfoResponse {
 }
 
 pub async fn addtobatch(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: AddToBatchRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: AddToBatchRequest,
 ) -> Result<BatchInfoResponse, String> {
-  let full_url: String = format!("https://{}/v0/addtobatch", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/addtobatch", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Add(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Add(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // POST http://cyphernode:8888/removefrombatch
 /*
@@ -345,50 +327,44 @@ impl RemoveFromBatchRequest {
     pub fn new(output_id: u64) -> Self {
         RemoveFromBatchRequest { output_id }
     }
-
 }
 
 pub async fn removefrombatch(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: RemoveFromBatchRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: RemoveFromBatchRequest,
 ) -> Result<BatchInfoResponse, String> {
-  let full_url: String = format!("https://{}/v0/removefrombatch", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/removefrombatch", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Remove(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Remove(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // POST http://cyphernode:8888/getbatcher
 /*
@@ -425,50 +401,44 @@ impl GetBatcherRequest {
             batcher_id,
         }
     }
-
 }
 
 pub async fn getbatcher(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: GetBatcherRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: GetBatcherRequest,
 ) -> Result<BatchInfoResponse, String> {
-  let full_url: String = format!("https://{}/v0/getbatcher", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/getbatcher", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Get(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Get(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // POST http://cyphernode:8888/getbatchdetails
 /*
@@ -522,7 +492,6 @@ impl GetBatchDetailRequest {
             txid,
         }
     }
-
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -561,46 +530,41 @@ impl BatchDetailResponse {
 }
 
 pub async fn getbatchdetails(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: GetBatchDetailRequest,
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: GetBatchDetailRequest,
 ) -> Result<BatchDetailResponse, String> {
-  let full_url: String = format!("https://{}/v0/getbatchdetails", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/getbatchdetails", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::GetDetail(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::GetDetail(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // GET http://cyphernode:8888/listbatchers
 /*
@@ -637,45 +601,40 @@ impl ListBatchersResponse {
     }
 }
 pub async fn listbatchers(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
+    host: String,
+    jwt: String,
+    cert: Certificate,
 ) -> Result<ListBatchersResponse, String> {
-  let full_url: String = format!("https://{}/v0/listbatchers", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/listbatchers", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.get(&full_url).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::List(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::List(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }
 // GET http://cyphernode:8888/batchspend
 /*
@@ -725,44 +684,39 @@ impl BatchSpendResponse {
     }
 }
 pub async fn batchspend(
-  host: String,
-  jwt: String,
-  cert: Option<Certificate>,
-  body: BatchSpendRequest
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: BatchSpendRequest,
 ) -> Result<BatchSpendResponse, String> {
-  let full_url: String = format!("https://{}/v0/batchspend", host).to_string();
-  let mut headers = HeaderMap::new();
-  headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+    let full_url: String = format!("https://{}/v0/batchspend", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-  let client = if cert.is_some() {
-      reqwest::Client::builder().add_root_certificate(cert.unwrap())
-  } else {
-      reqwest::Client::builder().danger_accept_invalid_certs(true)
-  };
-  let client = match client.default_headers(headers).build() {
-      Ok(result) => result,
-      Err(e) => return Err(e.to_string()),
-  };
-  let response = match client.post(&full_url).json(&body).send().await {
-      Ok(response) => match response.text().await {
-          Ok(text) => {
-              println!("{}", text);
-              match BatcherRespoonse::structify(&text) {
-                  Ok(result) => result,
-                  Err(e) => return Err(e.message),
-              }
-          }
-          Err(e) => return Err(e.to_string()),
-      },
-      Err(e) => return Err(e.to_string()),
-  };
-  if response.error.is_some(){
-    return Err(response.error.unwrap())
-  }
-  else{
-    match response.result{
-      ResponseType::Spend(res)=>return Ok(res),
-      _=>unreachable!("IMPOSSIBRU!")
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Spend(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
     }
-  }
 }

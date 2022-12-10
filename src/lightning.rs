@@ -1,5 +1,8 @@
 use crate::e::{ErrorKind, S5Error};
-use reqwest::{header::{HeaderMap, AUTHORIZATION}, Certificate};
+use reqwest::{
+    header::{HeaderMap, AUTHORIZATION},
+    Certificate,
+};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -37,16 +40,16 @@ pub struct Binding {
     pub port: i64,
 }
 
-pub async fn ln_getinfo(host: String, jwt: String, cert: Option<Certificate>) -> Result<LnInfo, String> {
+pub async fn ln_getinfo(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+) -> Result<LnInfo, String> {
     let full_url: String = format!("https://{}/v0/ln_getinfo", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -88,17 +91,13 @@ impl LnFundAddress {
 pub async fn ln_newaddr(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
 ) -> Result<LnFundAddress, String> {
     let full_url: String = format!("https://{}/v0/ln_newaddr", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -139,17 +138,13 @@ impl LnConnString {
 pub async fn ln_getconnectionstring(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
 ) -> Result<LnConnString, String> {
     let full_url: String = format!("https://{}/v0/ln_getconnectionstring", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -237,18 +232,14 @@ impl LnConnectFundError {
 pub async fn ln_connectfund(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
     body: LnConnectFundReq,
 ) -> Result<LnConnectFund, String> {
     let full_url: String = format!("https://{}/v0/ln_connectfund", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -297,18 +288,14 @@ impl LnBolt11 {
 pub async fn ln_decodebolt11(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
     invoice: String,
 ) -> Result<LnBolt11, String> {
     let full_url: String = format!("https://{}/v0/ln_decodebolt11/{}", host, invoice).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -555,17 +542,13 @@ pub struct Channel {
 pub async fn ln_listfunds(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
 ) -> Result<LnListFunds, String> {
     let full_url: String = format!("https://{}/v0/ln_listfunds", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -613,17 +596,13 @@ pub struct Pay {
 pub async fn ln_listpays(
     host: String,
     jwt: String,
-    cert: Option<Certificate>
+    cert: Certificate,
 ) -> Result<LnListPays, String> {
     let full_url: String = format!("https://{}/v0/ln_listpays", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -674,7 +653,7 @@ pub struct Route {
 pub async fn ln_getroute(
     host: String,
     jwt: String,
-    cert: Option<Certificate>,
+    cert: Certificate,
     node_id: String,
     msatoshis: u128,
     risk_factor: f32,
@@ -690,11 +669,7 @@ pub async fn ln_getroute(
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -761,16 +736,17 @@ impl LnWithdrawReq {
     }
 }
 
-pub async fn ln_withdraw(host: String, jwt: String, cert: Option<Certificate>, body: LnWithdrawReq) -> Result<LnWithdraw, String> {
+pub async fn ln_withdraw(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: LnWithdrawReq,
+) -> Result<LnWithdraw, String> {
     let full_url: String = format!("https://{}/v0/ln_withdraw", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
 
-    let client = if cert.is_some() {
-        reqwest::Client::builder().add_root_certificate(cert.unwrap())
-    } else {
-        reqwest::Client::builder().danger_accept_invalid_certs(true)
-    };
+    let client = reqwest::Client::builder().add_root_certificate(cert);
     let client = match client.default_headers(headers).build() {
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
@@ -788,5 +764,4 @@ pub async fn ln_withdraw(host: String, jwt: String, cert: Option<Certificate>, b
         },
         Err(e) => Err(e.to_string()),
     }
-
 }

@@ -32,9 +32,8 @@ struct Claims {
 /// The gatekeeper client.
 pub struct CnGateway {
     pub host: String,
-    id: String,
-    key: String,
-    cert: Option<Certificate>,
+    token: String,
+    cert: Certificate,
 }
 impl CnGateway {
     /// Initialize
@@ -42,10 +41,9 @@ impl CnGateway {
         host: String,
         id: String,
         key: String,
-        cert_path: Option<String>,
+        cert_path: String,
     ) -> Result<Self, String> {
-        if cert_path.is_some() {
-            let cert_content = match tokio::fs::read_to_string(cert_path.unwrap()).await {
+            let cert_content = match tokio::fs::read_to_string(cert_path).await {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
@@ -53,48 +51,36 @@ impl CnGateway {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
+            let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+                Ok(n) => n.as_millis(),
+                Err(_) => return Err("Clock Went Backwards!".to_string()),
+            };
+            let payload = Claims {
+                id: id,
+                exp: now + LIFETIME,
+            };
+            let header = Header {
+                alg: Algorithm::HS256,
+                ..Default::default()
+            };
+            let token = match encode(
+                &header,
+                &payload,
+                &EncodingKey::from_secret(key.as_bytes()),
+            ) {
+                Ok(token) => token,
+                Err(_) => return Err("Error Encoding JWT!".to_string()),
+            };
             Ok(CnGateway {
                 host,
-                id,
-                key,
-                cert: Some(cert),
+                token,
+                cert: cert,
             })
-        } else {
-            Ok(CnGateway {
-                host,
-                id,
-                key,
-                cert: None,
-            })
-        }
-    }
-    /// Internally used to create JWT
-    fn auth_token(&self) -> Result<String, String> {
-        let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(n) => n.as_millis(),
-            Err(_) => return Err("Clock Went Backwards!".to_string()),
-        };
-        let payload = Claims {
-            id: self.id.clone(),
-            exp: now + LIFETIME,
-        };
-        let header = Header {
-            alg: Algorithm::HS256,
-            ..Default::default()
-        };
-        match encode(
-            &header,
-            &payload,
-            &EncodingKey::from_secret(self.clone().key.as_ref()),
-        ) {
-            Ok(token) => Ok(token),
-            Err(_) => Err("Error Encoding JWT!".to_string()),
-        }
+        
     }
     /// Check mempool info
     pub async fn getmempoolinfo(&self) -> Result<MempoolInfo, String> {
-        let jwt = self.auth_token().unwrap();
-        core::getmempoolinfo(self.host.clone(), jwt, self.cert.clone()).await
+        core::getmempoolinfo(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Watch a bitcoin address
     // FOR BUY ORDERS:
@@ -103,9 +89,8 @@ impl CnGateway {
         batcher_label: String,
         conf_target: u64,
     ) -> Result<CreateBatcherResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = CreateBatcherRequest::new(batcher_label, conf_target);
-        batcher::createbatcher(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::createbatcher(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn updatebatcher(
         &self,
@@ -113,9 +98,8 @@ impl CnGateway {
         batcher_id: Option<String>,
         conf_target: u64,
     ) -> Result<UpdateBatcherResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = UpdateBatcherRequest::new(batcher_label, batcher_id, conf_target);
-        batcher::updatebatcher(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::updatebatcher(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn addtobatch(
         &self,
@@ -124,23 +108,20 @@ impl CnGateway {
         batcher_label: Option<String>,
         webhook_url: Option<String>,
     ) -> Result<BatchInfoResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = AddToBatchRequest::new(address, amount, batcher_label, webhook_url);
-        batcher::addtobatch(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::addtobatch(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn removefrombatch(&self, output_id: u64) -> Result<BatchInfoResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = RemoveFromBatchRequest::new(output_id);
-        batcher::removefrombatch(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::removefrombatch(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn getbatcher(
         &self,
         batcher_label: Option<String>,
         batcher_id: Option<String>,
     ) -> Result<BatchInfoResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = GetBatcherRequest::new(batcher_label, batcher_id);
-        batcher::getbatcher(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::getbatcher(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn getbatchdetails(
         &self,
@@ -148,13 +129,11 @@ impl CnGateway {
         batcher_label: Option<String>,
         txid: Option<String>,
     ) -> Result<BatchDetailResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = GetBatchDetailRequest::new(batcher_id, batcher_label, txid);
-        batcher::getbatchdetails(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::getbatchdetails(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn listbatchers(&self) -> Result<ListBatchersResponse, String> {
-        let jwt = self.auth_token().unwrap();
-        batcher::listbatchers(self.host.clone(), jwt, self.cert.clone()).await
+        batcher::listbatchers(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     pub async fn batchspend(
         &self,
@@ -162,9 +141,8 @@ impl CnGateway {
         batcher_id: Option<String>,
         conf_target: Option<u64>,
     ) -> Result<BatchSpendResponse, String> {
-        let jwt = self.auth_token().unwrap();
         let request = BatchSpendRequest::new(batcher_label, batcher_id, conf_target);
-        batcher::batchspend(self.host.clone(), jwt, self.cert.clone(), request).await
+        batcher::batchspend(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
 
     // FOR SELL ORDERS:
@@ -177,7 +155,6 @@ impl CnGateway {
         event_message: String,
         label: String,
     ) -> Result<WatchAddress, String> {
-        let jwt = self.auth_token().unwrap();
         let body = WatchAddressReq::new(
             address,
             unconfirmed_callback_url,
@@ -185,13 +162,12 @@ impl CnGateway {
             event_message,
             label,
         );
-        bitcoin::watch(self.host.clone(), jwt, self.cert.clone(), body).await
+        bitcoin::watch(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Unwatch a bitcoin address
     pub async fn unwatch(&self, address: String) -> Result<UnwatchAddress, String> {
-        let jwt = self.auth_token().unwrap();
 
-        bitcoin::unwatch(self.host.clone(), jwt, self.cert.clone(), address).await
+        bitcoin::unwatch(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
     }
     /// Get addresses currently being watched
     pub async fn watchxpub(
@@ -203,7 +179,6 @@ impl CnGateway {
         unconfirmed_callback_url: String,
         confirmed_callback_url: String,
     ) -> Result<WatchXpub, String> {
-        let jwt = self.auth_token().unwrap();
 
         let body = WatchXpubReq::new(
             label,
@@ -213,41 +188,35 @@ impl CnGateway {
             unconfirmed_callback_url,
             confirmed_callback_url,
         );
-        bitcoin::watchxpub(self.host.clone(), jwt, self.cert.clone(), body).await
+        bitcoin::watchxpub(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Unwatch a bitcoin xpub
     pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
-        let jwt = self.auth_token().unwrap();
 
-        bitcoin::unwatchxpubbyxpub(self.host.clone(), jwt, self.cert.clone(), xpub).await
+        bitcoin::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub).await
     }
     /// Get addresses currently being watched
     pub async fn getactivewatches(&self) -> Result<ActiveWatches, String> {
-        let jwt = self.auth_token().unwrap();
-        bitcoin::getactivewatches(self.host.clone(), jwt, self.cert.clone()).await
+        bitcoin::getactivewatches(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Ln node info
     pub async fn ln_getinfo(&self) -> Result<LnInfo, String> {
-        let jwt = self.auth_token().unwrap();
-        lightning::ln_getinfo(self.host.clone(), jwt, self.cert.clone()).await
+        lightning::ln_getinfo(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Get new address to deposit funds to open channels with
     pub async fn ln_newaddr(&self) -> Result<LnFundAddress, String> {
-        let jwt = self.auth_token().unwrap();
 
-        lightning::ln_newaddr(self.host.clone(), jwt, self.cert.clone()).await
+        lightning::ln_newaddr(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Get your nodes connection string to share with peers
     pub async fn ln_getconnectionstring(&self) -> Result<LnConnString, String> {
-        let jwt = self.auth_token().unwrap();
 
-        lightning::ln_getconnectionstring(self.host.clone(), jwt, self.cert.clone()).await
+        lightning::ln_getconnectionstring(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Decode an invoice
     pub async fn ln_decodebolt11(&self, invoice: String) -> Result<LnBolt11, String> {
-        let jwt = self.auth_token().unwrap();
 
-        lightning::ln_decodebolt11(self.host.clone(), jwt, self.cert.clone(), invoice).await
+        lightning::ln_decodebolt11(self.host.clone(), self.token.clone(), self.cert.clone(), invoice).await
     }
     /// Connect to a given peer and attempt opening a channel and fund it with msatoshis. Get notified at callback_url.
     pub async fn ln_connectfund(
@@ -256,22 +225,19 @@ impl CnGateway {
         msatoshis: u128,
         callback_url: String,
     ) -> Result<LnConnectFund, String> {
-        let jwt = self.auth_token().unwrap();
         let body = LnConnectFundReq::new(peer, msatoshis, callback_url);
 
-        lightning::ln_connectfund(self.host.clone(), jwt, self.cert.clone(), body).await
+        lightning::ln_connectfund(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Returns the list of unused outputs and funds in open channels
     pub async fn ln_listfunds(&self) -> Result<LnListFunds, String> {
-        let jwt = self.auth_token().unwrap();
 
-        lightning::ln_listfunds(self.host.clone(), jwt, self.cert.clone()).await
+        lightning::ln_listfunds(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Returns history of paid invoices
     pub async fn ln_listpays(&self) -> Result<LnListPays, String> {
-        let jwt = self.auth_token().unwrap();
 
-        lightning::ln_listpays(self.host.clone(), jwt, self.cert.clone()).await
+        lightning::ln_listpays(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Returns an array representing hops of nodes to get to the destination node from our node
     pub async fn ln_getroute(
@@ -280,11 +246,10 @@ impl CnGateway {
         msatoshis: u128,
         risk_factor: f32,
     ) -> Result<LnRoutes, String> {
-        let jwt = self.auth_token().unwrap();
 
         lightning::ln_getroute(
             self.host.clone(),
-            jwt,
+            self.token.clone(),
             self.cert.clone(),
             node_id,
             msatoshis,
@@ -299,17 +264,37 @@ impl CnGateway {
         satoshis: u128,
         feerate: String,
     ) -> Result<LnWithdraw, String> {
-        let jwt = self.auth_token().unwrap();
 
         let body = LnWithdrawReq::new(address, satoshis, feerate);
-        lightning::ln_withdraw(self.host.clone(), jwt, self.cert.clone(), body).await
+        lightning::ln_withdraw(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[tokio::test]
-    async fn local_testnet() {
+    async fn local_batcher_testnet() {
+        let gatekeeper_ip = "localhost:2009".to_string();
+        let kid = "003".to_string();
+        let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
+        let project_path = env!("CARGO_MANIFEST_DIR");
+        let cert_path = format!("{}/cert.pem", project_path);
+        let client = CnGateway::new(
+            gatekeeper_ip.clone(),
+            kid.clone(),
+            key.clone(),
+            cert_path.clone(),
+        )
+        .await
+        .unwrap();
+        println!("{}\n\n{:#?}", cert_path, client.cert);
+        let mempool = client.getmempoolinfo().await.unwrap();
+        println!("{:#?}", mempool);
+
+    }
+    #[tokio::test]
+    async fn local_ln_testnet() {
         let gatekeeper_ip = "localhost:2009".to_string();
         let kid = "003".to_string();
         let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
@@ -320,19 +305,10 @@ mod tests {
             gatekeeper_ip.clone(),
             kid.clone(),
             key.clone(),
-            Some(cert_path.clone()),
+            cert_path.clone(),
         )
         .await
         .unwrap();
-
-        println!("{}\n\n{:#?}", cert_path, client.cert);
-        let mempool = client.getmempoolinfo().await.unwrap();
-        println!("{:#?}", mempool);
-
-        let client = CnGateway::new(gatekeeper_ip, kid, key, None).await.unwrap();
-        println!("{}\n\n{:#?}", cert_path, client.cert);
-        let mempool = client.getmempoolinfo().await.unwrap();
-        println!("{:#?}", mempool);
 
         let lninfo = client.ln_getinfo().await.unwrap();
         let newaddr = client.ln_newaddr().await.unwrap();
@@ -351,15 +327,14 @@ mod tests {
         let list_funds = client.ln_listfunds().await.unwrap();
         let list_pays = client.ln_listpays().await.unwrap();
 
-        let peer = "02b856473d51e796fc5ff6098afa424d5a35a6e06ce5aa83904a4dcc6f457196d3".to_string();
-        let msatoshis = 3511;
-        let risk_factor = 0.1;
-        let routes = client
-            .ln_getroute(peer, msatoshis, risk_factor)
-            .await
-            .unwrap();
+        // let peer = "02b856473d51e796fc5ff6098afa424d5a35a6e06ce5aa83904a4dcc6f457196d3".to_string();
+        // let msatoshis = 3511;
+        // let risk_factor = 0.1;
+        // let routes = client
+        //     .ln_getroute(peer, msatoshis, risk_factor)
+        //     .await
+        //     .unwrap();
 
-        println!("{:#?}", mempool);
         println!("{:#?}", lninfo);
         println!("{:#?}", newaddr);
         println!("{:#?}", connstr);
@@ -367,9 +342,10 @@ mod tests {
         println!("{:#?}", fund_stat);
         println!("{:#?}", list_funds);
         println!("{:#?}", list_pays);
-        println!("{:#?}", routes);
+        // println!("{:#?}", routes);
     }
     #[tokio::test]
+    #[ignore]
     async fn cypherappsnet() {
         let gatekeeper_ip = "gatekeeper:2009".to_string();
         let kid = "003".to_string();
@@ -377,7 +353,7 @@ mod tests {
         let project_path = env!("CARGO_MANIFEST_DIR");
         let cert_path = format!("{}/cert.pem", project_path);
 
-        let client = CnGateway::new(gatekeeper_ip, kid, key, Some(cert_path.clone()))
+        let client = CnGateway::new(gatekeeper_ip, kid, key, cert_path.clone())
             .await
             .unwrap();
         println!("{}\n\n{:#?}", cert_path, client.cert);
