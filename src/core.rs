@@ -35,7 +35,7 @@ impl MempoolInfo {
         }
     }
 }
-
+///Returns the mempool information of the Bitcoin node.
 pub async fn getmempoolinfo(
     host: String,
     jwt: String,

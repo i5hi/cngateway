@@ -36,20 +36,6 @@ impl BatcherRespoonse {
         }
     }
 }
-// ip=$(docker container inspect -f '{{ .NetworkSettings.Networks.cyphernodenet.IPAddress }}' cyphernode_proxy_1)
-// POST http://$ip:8888/createbatcher
-/*
-REQUEST{
-    "batcherLabel":"lowfees",
-    "confTarget":32
-}
-RESPONSE{
-  "result": {
-    "batcherId": 1
-  },
-  "error": null
-}
-*/
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateBatcherRequest {
@@ -81,7 +67,7 @@ impl CreateBatcherResponse {
         }
     }
 }
-
+///Used to create a batching template, by setting a label and a default confTarget.
 pub async fn createbatcher(
     host: String,
     jwt: String,
@@ -119,21 +105,7 @@ pub async fn createbatcher(
         }
     }
 }
-// POST http://cyphernode:8888/updatebatcher
-/*
-REQUEST{
-    "batcherLabel":"fast",
-    "confTarget":2
-}
-RESPONSE{
-  "result": {
-    "batcherId": 1,
-    "batcherLabel": "fast",
-    "confTarget": 2
-  },
-  "error": null
-}
-*/
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateBatcherRequest {
@@ -172,7 +144,7 @@ impl UpdateBatcherResponse {
         }
     }
 }
-
+///Used to change batching template settings.
 pub async fn updatebatcher(
     host: String,
     jwt: String,
@@ -210,25 +182,7 @@ pub async fn updatebatcher(
         }
     }
 }
-// POST http://cyphernode:8888/addtobatch
-/*
-REQUEST{
-    "address":"2N8DcqzfkYi8CkYzvNNS5amoq3SbAcQNXKp",
-    "amount":0.00233
-    "batcherLabel":"lowfees",
-    "webhookUrl":"https://myCypherApp:3000/batchExecuted"
-}
-RESPONSE{
-  "result": {
-    "batcherId": 1,
-    "outputId": 34,
-    "nbOutputs": 7,
-    "oldest": "2020-09-09 14:00:01",
-    "total": 0.04016971
-  },
-  "error": null
-}
-*/
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddToBatchRequest {
@@ -272,7 +226,7 @@ impl BatchInfoResponse {
         }
     }
 }
-
+///Inserts output information in the DB. Used when batchspend is called later.
 pub async fn addtobatch(
     host: String,
     jwt: String,
@@ -310,14 +264,7 @@ pub async fn addtobatch(
         }
     }
 }
-// POST http://cyphernode:8888/removefrombatch
-/*
-REQUEST{
-    "outputId":72
-}
-RESPONSE- SAME AS ADD
 
-*/
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoveFromBatchRequest {
@@ -328,7 +275,7 @@ impl RemoveFromBatchRequest {
         RemoveFromBatchRequest { output_id }
     }
 }
-
+///Removes a previously added output scheduled for the next batch.
 pub async fn removefrombatch(
     host: String,
     jwt: String,
@@ -366,27 +313,7 @@ pub async fn removefrombatch(
         }
     }
 }
-// POST http://cyphernode:8888/getbatcher
-/*
-REQUEST{}
-or
-{"batcherId":34}
-or
-{"batcherLabel":"fastest"}
 
-
-RESPONSE{
-  "result": {
-    "batcherId": 1,
-    "batcherLabel": "default",
-    "confTarget": 6,
-    "nbOutputs": 12,
-    "oldest": 123123,
-    "total": 0.86990143
-  },
-  "error": null
-}
-*/
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -402,7 +329,7 @@ impl GetBatcherRequest {
         }
     }
 }
-
+///Will return current state/summary of the requested batching template.
 pub async fn getbatcher(
     host: String,
     jwt: String,
@@ -440,43 +367,88 @@ pub async fn getbatcher(
         }
     }
 }
-// POST http://cyphernode:8888/getbatchdetails
-/*
-REQUEST{
-}
-or
-{"batcherId":34}
-or
-{"batcherLabel":"fastest","txid":"af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648"}
 
-RESPONSE{
-  "result": {
-    "batcherId": 34,
-    "batcherLabel": "Special batcher for a special client",
-    "confTarget": 6,
-    "nbOutputs": 83,
-    "oldest": 123123,
-    "total": 10.86990143,
-    "txid": "af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648",
-    "hash": "af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648",
-    "details": {
-      "firstseen": 123123,
-      "size": 424,
-      "vsize": 371,
-      "replaceable":true,
-      "fee": 0.00004112
-    },
-    "outputs": {
-      "1abc": 0.12,
-      "3abc": 0.66,
-      "bc1abc": 2.848,
-      ...
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSpendRequest {
+    pub batcher_label: Option<String>,
+    pub batcher_id: Option<String>,
+    pub conf_target: Option<u64>,
+}
+impl BatchSpendRequest {
+    pub fn new(
+        batcher_label: Option<String>,
+        batcher_id: Option<String>,
+        conf_target: Option<u64>,
+    ) -> Self {
+        BatchSpendRequest {
+            batcher_label,
+            batcher_id,
+            conf_target,
+        }
     }
-  },
-  "error": null
 }
-*/
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BatchSpendResponse {
+    pub status: String,
+    pub hash: String,
+}
+impl BatchSpendResponse {
+    /// Used internally to convert api json string to native struct
+    pub fn structify(stringified: &str) -> Result<BatchSpendResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error stringifying BatchSpendResponse",
+            )),
+        }
+    }
+}
+
+///Calls the sendmany RPC on spending wallet with the unspent "addtobatch" inserted outputs. 
+///Will execute default batcher if no batcherId/batcherLabel supplied and default confTarget if no confTarget supplied.
+pub async fn batchspend(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: BatchSpendRequest,
+) -> Result<BatchSpendResponse, String> {
+    let full_url: String = format!("https://{}/v0/batchspend", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    let response = match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match BatcherRespoonse::structify(&text) {
+                    Ok(result) => result,
+                    Err(e) => return Err(e.message),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        },
+        Err(e) => return Err(e.to_string()),
+    };
+    if response.error.is_some() {
+        return Err(response.error.unwrap());
+    } else {
+        match response.result {
+            ResponseType::Spend(res) => return Ok(res),
+            _ => unreachable!("IMPOSSIBRU!"),
+        }
+    }
+}
+
+
+///Will return current state/summary of the requested batching template.
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetBatchDetailRequest {
@@ -529,6 +501,9 @@ impl BatchDetailResponse {
     }
 }
 
+///Will return current state and details of the requested batch, including all outputs. 
+///A batch is the combination of a batcher and an optional txid. 
+/// If no txid is supplied, will return current non-yet-executed batch.
 pub async fn getbatchdetails(
     host: String,
     jwt: String,
@@ -566,17 +541,7 @@ pub async fn getbatchdetails(
         }
     }
 }
-// GET http://cyphernode:8888/listbatchers
-/*
-RESPONSE{
-  "result": [
-    {"batcherId":1,"batcherLabel":"default","confTarget":6,"nbOutputs":12,"oldest":123123,"total":0.86990143},
-    {"batcherId":2,"batcherLabel":"lowfee","confTarget":32,"nbOutputs":44,"oldest":123123,"total":0.49827387},
-    {"batcherId":3,"batcherLabel":"highfee","confTarget":2,"nbOutputs":7,"oldest":123123,"total":4.16843782}
-  ],
-  "error": null
-}
-*/
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -600,6 +565,9 @@ impl ListBatchersResponse {
         }
     }
 }
+///Will return a list of batch templates. 
+///batcherId 1 is a default batcher created at installation time.
+
 pub async fn listbatchers(
     host: String,
     jwt: String,
@@ -644,79 +612,3 @@ RESPONSE{
 }
 
 */
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BatchSpendRequest {
-    pub batcher_label: Option<String>,
-    pub batcher_id: Option<String>,
-    pub conf_target: Option<u64>,
-}
-impl BatchSpendRequest {
-    pub fn new(
-        batcher_label: Option<String>,
-        batcher_id: Option<String>,
-        conf_target: Option<u64>,
-    ) -> Self {
-        BatchSpendRequest {
-            batcher_label,
-            batcher_id,
-            conf_target,
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct BatchSpendResponse {
-    pub status: String,
-    pub hash: String,
-}
-impl BatchSpendResponse {
-    /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<BatchSpendResponse, S5Error> {
-        match serde_json::from_str(stringified) {
-            Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
-                ErrorKind::Internal,
-                "Error stringifying BatchSpendResponse",
-            )),
-        }
-    }
-}
-pub async fn batchspend(
-    host: String,
-    jwt: String,
-    cert: Certificate,
-    body: BatchSpendRequest,
-) -> Result<BatchSpendResponse, String> {
-    let full_url: String = format!("https://{}/v0/batchspend", host).to_string();
-    let mut headers = HeaderMap::new();
-    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
-
-    let client = reqwest::Client::builder().add_root_certificate(cert);
-    let client = match client.default_headers(headers).build() {
-        Ok(result) => result,
-        Err(e) => return Err(e.to_string()),
-    };
-    let response = match client.post(&full_url).json(&body).send().await {
-        Ok(response) => match response.text().await {
-            Ok(text) => {
-                println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
-                    Ok(result) => result,
-                    Err(e) => return Err(e.message),
-                }
-            }
-            Err(e) => return Err(e.to_string()),
-        },
-        Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Spend(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
-    }
-}

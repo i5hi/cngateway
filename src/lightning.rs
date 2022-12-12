@@ -39,7 +39,7 @@ pub struct Binding {
     pub address: String,
     pub port: i64,
 }
-
+///Calls getinfo from lightningd. Useful to let your users know where to connect to.
 pub async fn ln_getinfo(
     host: String,
     jwt: String,
@@ -87,7 +87,7 @@ impl LnFundAddress {
         }
     }
 }
-
+///Returns a Bitcoin bech32 address to fund your LN wallet.
 pub async fn ln_newaddr(
     host: String,
     jwt: String,
@@ -134,7 +134,7 @@ impl LnConnString {
         }
     }
 }
-
+///Returns a string containing your LN node connection information.
 pub async fn ln_getconnectionstring(
     host: String,
     jwt: String,
@@ -228,7 +228,9 @@ impl LnConnectFundError {
         }
     }
 }
-
+///First, it will connect your LN node to the supplied LN node. 
+///Then, it will fund a channel of the provided amount between you two. 
+///Cyphernode will call the supplied callback URL when the channel is ready to be used.
 pub async fn ln_connectfund(
     host: String,
     jwt: String,
@@ -284,7 +286,7 @@ impl LnBolt11 {
         }
     }
 }
-
+///Returns the detailed information of a BOLT11 string of a Lightning Network invoice.
 pub async fn ln_decodebolt11(
     host: String,
     jwt: String,
@@ -465,6 +467,10 @@ RESPONSE{
 }
 */
 
+
+///Calls listpeers from lightningd. Returns the list of peers and the channels opened with them, even for currently offline peers.
+
+
 /*
 RESPONSE{
    "outputs": [
@@ -538,7 +544,7 @@ pub struct Channel {
     pub funding_txid: String,
     pub funding_output: i64,
 }
-
+///Calls listfunds from lightningd. Returns the list of unused outputs and funds in open channels
 pub async fn ln_listfunds(
     host: String,
     jwt: String,
@@ -592,7 +598,7 @@ pub struct Pay {
     pub preimage: Option<String>,
     pub amount_sent_msat: Option<String>,
 }
-
+///Calls listpays from lightningd. Returns history of paid invoices
 pub async fn ln_listpays(
     host: String,
     jwt: String,
@@ -649,6 +655,7 @@ pub struct Route {
     pub delay: i64,
     pub style: String,
 }
+///Calls getroute from lightningd. Returns an array representing hops of nodes to get to the destination node from our node
 
 pub async fn ln_getroute(
     host: String,
@@ -716,6 +723,9 @@ pub struct LnWithdrawReq {
     pub all: bool,
 }
 impl LnWithdrawReq {
+    ///feerate can be any of: normal, urgent, slow, defaults to normal
+    ///satoshi can be either a 8 decimal digit representing the amount in BTC or an integer to represent the amount to withdraw in SATOSHI
+    ///all defaults to false but if set as true will withdraw all funds in the lightning wallet.
     pub fn new(address: String, amount: u128, feerate: String) -> Self {
         LnWithdrawReq {
             destination: address,
@@ -735,6 +745,8 @@ impl LnWithdrawReq {
         }
     }
 }
+///Calls withdraw on lightningd with address and payment parameters supplied. 
+///Withdraws funds to a destination address and Returns the transaction as confirmation.
 
 pub async fn ln_withdraw(
     host: String,
