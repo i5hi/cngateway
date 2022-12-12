@@ -115,12 +115,12 @@ All datatypes returned will internally be snake_case.
 - [ ] GET ots_getfile/1ddfb769eb0b8876bc570e25580e6a53afcf973362ee1ee4b54a807da2e5eed7
 - [ ] POST ots_verify
 - [ ] POST ots_info
-- [ ] POST createbatcher
-- [ ] POST updatebatcher
-- [ ] POST addtobatch
-- [ ] POST removefrombatch
-- [ ] POST batchspend
-- [ ] POST getbatcher
-- [ ] POST getbatchdetails
-- [ ] GET listbatchers
+- [x] POST createbatcher
+- [x] POST updatebatcher
+- [x] POST addtobatch
+- [x] POST removefrombatch
+- [x] POST batchspend
+- [x] POST getbatcher
+- [x] POST getbatchdetails
+- [x] GET listbatchers
 - [ ] POST bitcoin_estimatesmartfee
