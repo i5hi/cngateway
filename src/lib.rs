@@ -1,13 +1,18 @@
+use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
+use reqwest::Certificate;
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+
 mod bitcoin;
 mod core;
 mod e;
-use reqwest::Certificate;
 mod batcher;
 mod lightning;
 use crate::core::MempoolInfo;
 use crate::lightning::{
-    LnBolt11, LnConnString, LnConnectFund, LnFundAddress, LnInfo, LnListFunds, LnListPays,
-    LnRoutes, LnWithdraw,
+    LnBolt11, LnConnString, LnConnectFund, LnFundAddress, 
+    LnInfo, LnListFunds, LnListPays,
+    LnRoutes, LnWithdraw,LnConnectFundReq, LnWithdrawReq
 };
 use batcher::{
     AddToBatchRequest, BatchDetailResponse, BatchInfoResponse, BatchSpendRequest,
@@ -15,14 +20,13 @@ use batcher::{
     GetBatcherRequest, ListBatchersResponse, RemoveFromBatchRequest,
     UpdateBatcherRequest, UpdateBatcherResponse,
 };
-use bitcoin::{ActiveWatches, UnwatchAddress, UnwatchXpub, WatchAddress, WatchXpub};
-pub use bitcoin::{WatchAddressReq, WatchXpubReq};
-pub use lightning::{LnConnectFundReq, LnWithdrawReq};
-use serde::{Deserialize, Serialize};
+use bitcoin::{
+    ActiveWatches, UnwatchAddress, UnwatchXpub, 
+    WatchAddress, WatchXpub,WatchAddressReq, WatchXpubReq
+};
 
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use std::time::SystemTime;
 const LIFETIME: u128 = 3_600_000; // 1h
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     id: String,
@@ -47,7 +51,7 @@ impl CnGateway {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
-            let cert = match reqwest::Certificate::from_pem(&cert_content.as_bytes()) {
+            let cert = match Certificate::from_pem(&cert_content.as_bytes()) {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
@@ -179,7 +183,6 @@ impl CnGateway {
         unconfirmed_callback_url: String,
         confirmed_callback_url: String,
     ) -> Result<WatchXpub, String> {
-
         let body = WatchXpubReq::new(
             label,
             pub32,
@@ -192,7 +195,6 @@ impl CnGateway {
     }
     /// Unwatch a bitcoin xpub
     pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
-
         bitcoin::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub).await
     }
     /// Get addresses currently being watched
@@ -205,17 +207,14 @@ impl CnGateway {
     }
     /// Get new address to deposit funds to open channels with
     pub async fn ln_newaddr(&self) -> Result<LnFundAddress, String> {
-
         lightning::ln_newaddr(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Get your nodes connection string to share with peers
     pub async fn ln_getconnectionstring(&self) -> Result<LnConnString, String> {
-
         lightning::ln_getconnectionstring(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Decode an invoice
     pub async fn ln_decodebolt11(&self, invoice: String) -> Result<LnBolt11, String> {
-
         lightning::ln_decodebolt11(self.host.clone(), self.token.clone(), self.cert.clone(), invoice).await
     }
     /// Connect to a given peer and attempt opening a channel and fund it with msatoshis. Get notified at callback_url.
@@ -226,17 +225,14 @@ impl CnGateway {
         callback_url: String,
     ) -> Result<LnConnectFund, String> {
         let body = LnConnectFundReq::new(peer, msatoshis, callback_url);
-
         lightning::ln_connectfund(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Returns the list of unused outputs and funds in open channels
     pub async fn ln_listfunds(&self) -> Result<LnListFunds, String> {
-
         lightning::ln_listfunds(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Returns history of paid invoices
     pub async fn ln_listpays(&self) -> Result<LnListPays, String> {
-
         lightning::ln_listpays(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Returns an array representing hops of nodes to get to the destination node from our node
@@ -246,7 +242,6 @@ impl CnGateway {
         msatoshis: u128,
         risk_factor: f32,
     ) -> Result<LnRoutes, String> {
-
         lightning::ln_getroute(
             self.host.clone(),
             self.token.clone(),
@@ -264,7 +259,6 @@ impl CnGateway {
         satoshis: u128,
         feerate: String,
     ) -> Result<LnWithdraw, String> {
-
         let body = LnWithdrawReq::new(address, satoshis, feerate);
         lightning::ln_withdraw(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
@@ -277,9 +271,9 @@ mod tests {
     async fn local_batcher_testnet() {
         let gatekeeper_ip = "localhost:2009".to_string();
         let kid = "003".to_string();
-        let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
+        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/cert.pem", project_path);
+        let cert_path = format!("{}/certs/cacert.pem", project_path);
         let client = CnGateway::new(
             gatekeeper_ip.clone(),
             kid.clone(),
@@ -297,9 +291,9 @@ mod tests {
     async fn local_ln_testnet() {
         let gatekeeper_ip = "localhost:2009".to_string();
         let kid = "003".to_string();
-        let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
+        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/cert.pem", project_path);
+        let cert_path = format!("{}/certs/cacert.pem", project_path);
 
         let client = CnGateway::new(
             gatekeeper_ip.clone(),
@@ -346,12 +340,12 @@ mod tests {
     }
     #[tokio::test]
     #[ignore]
-    async fn cypherappsnet() {
+    async fn docker_cypherappsnet() {
         let gatekeeper_ip = "gatekeeper:2009".to_string();
         let kid = "003".to_string();
-        let key = "57072275edcd91d556b8917b71ab8b8b7c84c2c0ec7b0e50575788d1e51678fe".to_string();
+        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/cert.pem", project_path);
+        let cert_path = format!("{}/certs/cacert.pem", project_path);
 
         let client = CnGateway::new(gatekeeper_ip, kid, key, cert_path.clone())
             .await
