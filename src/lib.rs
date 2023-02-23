@@ -47,11 +47,11 @@ use serde::{Deserialize, Serialize};
 use reqwest::Certificate;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
-mod watcher;
-mod core;
-mod e;
-mod batcher;
-mod lightning;
+pub mod watcher;
+pub mod core;
+pub mod e;
+pub mod batcher;
+pub mod lightning;
 
 use crate::core::{
     MempoolInfo, 
