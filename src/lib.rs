@@ -83,6 +83,7 @@ struct Claims {
 }
 
 /// The gatekeeper client.
+#[derive(Clone)]
 pub struct CnGateway {
     pub host: String,
     token: String,
