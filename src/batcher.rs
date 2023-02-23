@@ -26,12 +26,12 @@ pub struct BatcherRespoonse {
     pub error: Option<String>,
 }
 impl BatcherRespoonse {
-    pub fn structify(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying BatcherRespoonse",
+                "Error getting BatcherRespoonse from string",
             )),
         }
     }
@@ -57,12 +57,12 @@ pub struct CreateBatcherResponse {
     pub batcher_id: u64,
 }
 impl CreateBatcherResponse {
-    pub fn structify(stringified: &str) -> Result<CreateBatcherResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<CreateBatcherResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying CreateBatcherResponse",
+                "Error getting CreateBatcherResponse from string",
             )),
         }
     }
@@ -87,7 +87,7 @@ pub async fn createbatcher(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -134,12 +134,12 @@ pub struct UpdateBatcherResponse {
     pub conf_target: u64,
 }
 impl UpdateBatcherResponse {
-    pub fn structify(stringified: &str) -> Result<UpdateBatcherResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<UpdateBatcherResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying UpdateBatcherResponse",
+                "Error getting UpdateBatcherResponse from string",
             )),
         }
     }
@@ -164,7 +164,7 @@ pub async fn updatebatcher(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -216,12 +216,12 @@ pub struct BatchInfoResponse {
     pub total: f64,
 }
 impl BatchInfoResponse {
-    pub fn structify(stringified: &str) -> Result<BatchInfoResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<BatchInfoResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying BatchInfoResponse",
+                "Error getting BatchInfoResponse from string",
             )),
         }
     }
@@ -246,7 +246,7 @@ pub async fn addtobatch(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -295,7 +295,7 @@ pub async fn removefrombatch(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -349,7 +349,7 @@ pub async fn getbatcher(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -396,12 +396,12 @@ pub struct BatchSpendResponse {
 }
 impl BatchSpendResponse {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<BatchSpendResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<BatchSpendResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying BatchSpendResponse",
+                "Error getting BatchSpendResponse from string",
             )),
         }
     }
@@ -428,7 +428,7 @@ pub async fn batchspend(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -490,12 +490,12 @@ pub struct BatchDetailResponse {
 }
 impl BatchDetailResponse {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<BatchDetailResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<BatchDetailResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying BatchDetailResponse",
+                "Error getting BatchDetailResponse from string",
             )),
         }
     }
@@ -523,7 +523,7 @@ pub async fn getbatchdetails(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }
@@ -555,12 +555,12 @@ pub struct ListBatchersResponse {
 }
 impl ListBatchersResponse {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<ListBatchersResponse, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<ListBatchersResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying ListBatchersResponse",
+                "Error getting ListBatchersResponse from string",
             )),
         }
     }
@@ -586,7 +586,7 @@ pub async fn listbatchers(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::structify(&text) {
+                match BatcherRespoonse::from_str(&text) {
                     Ok(result) => result,
                     Err(e) => return Err(e.message),
                 }

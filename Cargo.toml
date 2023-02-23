@@ -1,14 +1,11 @@
 [package]
 name = "cngateway"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "cyphernode gatekeeper client"
 
-[[example]]
-name = "demo"
-
 [dependencies]
-tokio = { version = "1.22.0", features = ["fs", "rt","macros","rt-multi-thread"] }
+tokio = { version = "1.22.0", features = ["fs", "rt","macros"] }
 serde = "1.0.126"
 serde_derive = "1.0.0"
 serde_json = "1.0.64"

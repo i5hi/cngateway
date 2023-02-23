@@ -21,12 +21,12 @@ pub struct LnInfo {
 }
 impl LnInfo {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnInfo, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnInfo, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LightningInfo",
+                "Error to_stringing LightningInfo",
             )),
         }
     }
@@ -58,7 +58,7 @@ pub async fn ln_getinfo(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnInfo::structify(&text) {
+                match LnInfo::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -77,12 +77,12 @@ pub struct LnFundAddress {
 }
 impl LnFundAddress {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnFundAddress, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnFundAddress, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnFundAddress",
+                "Error to_stringing LnFundAddress",
             )),
         }
     }
@@ -106,7 +106,7 @@ pub async fn ln_newaddr(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnFundAddress::structify(&text) {
+                match LnFundAddress::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -124,12 +124,12 @@ pub struct LnConnString {
 }
 impl LnConnString {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnConnString, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnConnString, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnConnString",
+                "Error to_stringing LnConnString",
             )),
         }
     }
@@ -153,7 +153,7 @@ pub async fn ln_getconnectionstring(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnConnString::structify(&text) {
+                match LnConnString::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -181,12 +181,12 @@ impl LnConnectFundReq {
         }
     }
     /// Used internally to convert to native struct to api json string
-    pub fn stringify(&self) -> Result<String, S5Error> {
+    pub fn to_string(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnConnectFundRequest",
+                "Error to_stringing LnConnectFundRequest",
             )),
         }
     }
@@ -201,12 +201,12 @@ pub struct LnConnectFund {
 }
 impl LnConnectFund {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnConnectFund, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnConnectFund, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnConnectFund",
+                "Error to_stringing LnConnectFund",
             )),
         }
     }
@@ -218,12 +218,12 @@ pub struct LnConnectFundError {
 }
 impl LnConnectFundError {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnConnectFundError, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnConnectFundError, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnConnectFundError",
+                "Error to_stringing LnConnectFundError",
             )),
         }
     }
@@ -250,7 +250,7 @@ pub async fn ln_connectfund(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnConnectFund::structify(&text) {
+                match LnConnectFund::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -276,12 +276,12 @@ pub struct LnBolt11 {
 
 impl LnBolt11 {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnBolt11, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnBolt11, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error structifying LnBolt11",
+                "Error from_string LnBolt11",
             )),
         }
     }
@@ -306,7 +306,7 @@ pub async fn ln_decodebolt11(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnBolt11::structify(&text) {
+                match LnBolt11::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -510,12 +510,12 @@ pub struct LnListFunds {
 }
 impl LnListFunds {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnListFunds, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnListFunds, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error structifying LnListFunds",
+                "Error from_string LnListFunds",
             )),
         }
     }
@@ -563,7 +563,7 @@ pub async fn ln_listfunds(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnListFunds::structify(&text) {
+                match LnListFunds::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -581,12 +581,12 @@ pub struct LnListPays {
 }
 impl LnListPays {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnListPays, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnListPays, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error structifying LnListPays",
+                "Error from_string LnListPays",
             )),
         }
     }
@@ -617,7 +617,7 @@ pub async fn ln_listpays(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnListPays::structify(&text) {
+                match LnListPays::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -635,12 +635,12 @@ pub struct LnRoutes {
 }
 impl LnRoutes {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnRoutes, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnRoutes, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error structifying LnRoutes",
+                "Error from_string LnRoutes",
             )),
         }
     }
@@ -685,7 +685,7 @@ pub async fn ln_getroute(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnRoutes::structify(&text) {
+                match LnRoutes::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -704,12 +704,12 @@ pub struct LnWithdraw {
 }
 impl LnWithdraw {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<LnWithdraw, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<LnWithdraw, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnWithdraw",
+                "Error to_stringing LnWithdraw",
             )),
         }
     }
@@ -735,12 +735,12 @@ impl LnWithdrawReq {
         }
     }
     /// Used internally to convert to native struct to api json string
-    pub fn stringify(&self) -> Result<String, S5Error> {
+    pub fn to_string(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
             Err(_) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying LnWithdrawReq",
+                "Error to_stringing LnWithdrawReq",
             )),
         }
     }
@@ -767,7 +767,7 @@ pub async fn ln_withdraw(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match LnWithdraw::structify(&text) {
+                match LnWithdraw::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }

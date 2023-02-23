@@ -4,9 +4,15 @@ a simple client library for cyphernode gatekeeper
 
 ## setup
 
-- add cert.pem to the root directory for tests
-- if you are testing outside the cyphernodeappsnet, only run `cargo test local`
-- if you want to test within the cyphernodeappsnet, use the docker-compose and run `docker exec -it cngateway sh -c 'cargo test cyphernodeappsnet'`
+- add `certs/cert.pem` to the root directory for tests
+
+- if you are testing outside the cyphernodeappsnet (gatekeeper bound to localhost), only run 
+
+`cargo test local`
+
+- if you want to test within the cyphernodeappsnet, use the docker-compose and run 
+
+`docker exec -it cngateway sh -c 'cargo test cyphernodeappsnet'`
 
 ## usage
 
@@ -87,9 +93,9 @@ All datatypes returned will internally be snake_case.
 - [ ] GET get_txns_spending
 - [ ] GET getbalance
 - [ ] GET getbalances
-- [ ] GET getnewaddress/bech32
-- [ ] POST getnewaddress (with label)
-- [ ] GET validateaddress/address
+- [x] GET getnewaddress/bech32
+- [x] POST getnewaddress (with label)
+- [x] GET validateaddress/address
 - [ ] POST spend
 - [ ] POST bumpfee
 - [ ] GET batchspend

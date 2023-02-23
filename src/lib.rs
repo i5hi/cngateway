@@ -1,14 +1,63 @@
+/// cyphernode gateway client
+///
+/// cngateway provides an async rust client to interact with cyphernodes gatekeeper
+/// 
+///
+/// 
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```
+/// let gatekeeper_ip = "gatekeeper:2009".to_string(); // if you are connected to cyphernodeappsnet IF NOT expose gatekeeper outside network and use localhost
+/// let kid = "003".to_string();
+/// let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
+/// let cert_path = "/path/to/cacert.pem";
+/// let client = CnGateway::new(
+///     gatekeeper_ip.clone(),
+///     kid.clone(),
+///     key.clone(),
+///     cert_path.clone(),
+/// )
+/// .await?;
+/// // Use bitcoin core
+/// let mempool = client.getmempoolinfo().await?;
+/// let balance = client.getbalance().await?;
+/// let address = client.getnewaddress(AddressType::Bech32,"dup".to_string()).await?; // uses the POST api format {address_type, label}
+/// // Use lightning
+/// let lninfo = client.ln_getinfo().await.unwrap();
+/// let newaddr = client.ln_newaddr().await.unwrap();
+/// let connstr = client.ln_getconnectionstring().await.unwrap();
+/// let invoice = "lnbc920u1p3khp67pp5mcqxhupukc5te86wfkryerk8f69gg9ptzcep33ry94svm4wvwzqqdqqcqzzgxqyz5vqrzjqwnvuc0u4txn35cafc7w94gxvq5p3cu9dd95f7hlrh0fvs46wpvhdjx4k0kekn630gqqqqryqqqqthqqpyrzjqw8c7yfutqqy3kz8662fxutjvef7q2ujsxtt45csu0k688lkzu3ldjx4k0kekn630gqqqqryqqqqthqqpysp58nxs2nm5wphu234ggawaeul2tnpl6jqc9a0ymfhwpr64vq0k3l4s9qypqsqlkrver3pdxm0teyye0n6y5sje8u90t4j8vpxq3qjwjh9ue46cctj2nzw8fdudfec6nd0e8gx9v485ek7p624j5leeykg70wmv59y3pqqn9ulv2".to_string();
+/// let bolt11_decoded = client.ln_decodebolt11(invoice).await.unwrap();
+/// let peer =
+///     "02eadbd9e7557375161df8b646776a547c5cbc2e95b3071ec81553f8ec2cea3b8c@18.191.253.246:9735"
+///         .to_string();
+/// let msatoshis = 3_690_000;
+/// let callback_url = "http:///yourcypherapp/callback/".to_string();
+/// let fund_stat = client
+///     .ln_connectfund(peer, msatoshis, callback_url)
+///     .await
+///     .err();
+/// let list_funds = client.ln_listfunds().await.unwrap();
+/// let list_pays = client.ln_listpays().await.unwrap();
+/// ```
 use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use reqwest::Certificate;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
-mod bitcoin;
+mod watcher;
 mod core;
 mod e;
 mod batcher;
 mod lightning;
-use crate::core::MempoolInfo;
+
+use crate::core::{
+    MempoolInfo, 
+    AddressType, AddressRequest, Balance, Address
+};
+
 use crate::lightning::{
     LnBolt11, LnConnString, LnConnectFund, LnFundAddress, 
     LnInfo, LnListFunds, LnListPays,
@@ -20,7 +69,7 @@ use batcher::{
     GetBatcherRequest, ListBatchersResponse, RemoveFromBatchRequest,
     UpdateBatcherRequest, UpdateBatcherResponse,
 };
-use bitcoin::{
+use watcher::{
     ActiveWatches, UnwatchAddress, UnwatchXpub, 
     WatchAddress, WatchXpub,WatchAddressReq, WatchXpubReq
 };
@@ -40,7 +89,7 @@ pub struct CnGateway {
     cert: Certificate,
 }
 impl CnGateway {
-    /// Initialize
+    /// Initialize client with auth secrets
     pub async fn new(
         host: String,
         id: String,
@@ -55,6 +104,7 @@ impl CnGateway {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
+            
             let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
                 Ok(n) => n.as_millis(),
                 Err(_) => return Err("Clock Went Backwards!".to_string()),
@@ -82,12 +132,28 @@ impl CnGateway {
             })
         
     }
+    //
+    // CORE
+    //
     /// Check mempool info
     pub async fn getmempoolinfo(&self) -> Result<MempoolInfo, String> {
         core::getmempoolinfo(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
-    /// Watch a bitcoin address
-    // FOR BUY ORDERS:
+    /// Get balance
+    pub async fn getbalance(&self) -> Result<Balance, String> {
+        core::getbalance(self.host.clone(), self.token.clone(), self.cert.clone()).await
+    }
+    /// Get new address
+    pub async fn getnewaddress(&self, address_type: AddressType, label: String) -> Result<Address, String> {
+        let request = AddressRequest{
+            address_type: address_type,
+            label: label
+        };
+        core::getnewaddress(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
+    }
+    //
+    // BATCHER
+    //
     pub async fn createbatcher(
         &self,
         batcher_label: String,
@@ -148,9 +214,9 @@ impl CnGateway {
         let request = BatchSpendRequest::new(batcher_label, batcher_id, conf_target);
         batcher::batchspend(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
-
-    // FOR SELL ORDERS:
-
+    //
+    // WATCHER
+    //
     pub async fn watch(
         &self,
         address: String,
@@ -166,12 +232,12 @@ impl CnGateway {
             event_message,
             label,
         );
-        bitcoin::watch(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
+        watcher::watch(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Unwatch a bitcoin address
     pub async fn unwatch(&self, address: String) -> Result<UnwatchAddress, String> {
 
-        bitcoin::unwatch(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
+        watcher::unwatch(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
     }
     /// Get addresses currently being watched
     pub async fn watchxpub(
@@ -191,16 +257,19 @@ impl CnGateway {
             unconfirmed_callback_url,
             confirmed_callback_url,
         );
-        bitcoin::watchxpub(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
+        watcher::watchxpub(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Unwatch a bitcoin xpub
     pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
-        bitcoin::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub).await
+        watcher::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub).await
     }
     /// Get addresses currently being watched
     pub async fn getactivewatches(&self) -> Result<ActiveWatches, String> {
-        bitcoin::getactivewatches(self.host.clone(), self.token.clone(), self.cert.clone()).await
+        watcher::getactivewatches(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
+    //
+    // LIGHTNING
+    //
     /// Ln node info
     pub async fn ln_getinfo(&self) -> Result<LnInfo, String> {
         lightning::ln_getinfo(self.host.clone(), self.token.clone(), self.cert.clone()).await
@@ -268,10 +337,10 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn local_batcher_testnet() {
+    async fn local_bitcoin_testnet() {
         let gatekeeper_ip = "localhost:2009".to_string();
         let kid = "003".to_string();
-        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
+        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
         let cert_path = format!("{}/certs/cacert.pem", project_path);
         let client = CnGateway::new(
@@ -284,14 +353,20 @@ mod tests {
         .unwrap();
         println!("{}\n\n{:#?}", cert_path, client.cert);
         let mempool = client.getmempoolinfo().await.unwrap();
-        println!("{:#?}", mempool);
+        let address = client.getnewaddress(AddressType::Bech32,"dup".to_string()).await.unwrap();
+        let balance = client.getbalance().await.unwrap();
+
+        println!("mempool: {:#?}", mempool);
+        println!("address: {:#?}", address);
+        println!("balance: {:#?}", balance);
+
 
     }
     #[tokio::test]
     async fn local_ln_testnet() {
         let gatekeeper_ip = "localhost:2009".to_string();
         let kid = "003".to_string();
-        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
+        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
         let project_path = env!("CARGO_MANIFEST_DIR");
         let cert_path = format!("{}/certs/cacert.pem", project_path);
 
@@ -307,8 +382,8 @@ mod tests {
         let lninfo = client.ln_getinfo().await.unwrap();
         let newaddr = client.ln_newaddr().await.unwrap();
         let connstr = client.ln_getconnectionstring().await.unwrap();
-        let some_invoice = "lnbc920u1p3khp67pp5mcqxhupukc5te86wfkryerk8f69gg9ptzcep33ry94svm4wvwzqqdqqcqzzgxqyz5vqrzjqwnvuc0u4txn35cafc7w94gxvq5p3cu9dd95f7hlrh0fvs46wpvhdjx4k0kekn630gqqqqryqqqqthqqpyrzjqw8c7yfutqqy3kz8662fxutjvef7q2ujsxtt45csu0k688lkzu3ldjx4k0kekn630gqqqqryqqqqthqqpysp58nxs2nm5wphu234ggawaeul2tnpl6jqc9a0ymfhwpr64vq0k3l4s9qypqsqlkrver3pdxm0teyye0n6y5sje8u90t4j8vpxq3qjwjh9ue46cctj2nzw8fdudfec6nd0e8gx9v485ek7p624j5leeykg70wmv59y3pqqn9ulv2".to_string();
-        let bolt11_decoded = client.ln_decodebolt11(some_invoice).await.unwrap();
+        let invoice = "lnbc920u1p3khp67pp5mcqxhupukc5te86wfkryerk8f69gg9ptzcep33ry94svm4wvwzqqdqqcqzzgxqyz5vqrzjqwnvuc0u4txn35cafc7w94gxvq5p3cu9dd95f7hlrh0fvs46wpvhdjx4k0kekn630gqqqqryqqqqthqqpyrzjqw8c7yfutqqy3kz8662fxutjvef7q2ujsxtt45csu0k688lkzu3ldjx4k0kekn630gqqqqryqqqqthqqpysp58nxs2nm5wphu234ggawaeul2tnpl6jqc9a0ymfhwpr64vq0k3l4s9qypqsqlkrver3pdxm0teyye0n6y5sje8u90t4j8vpxq3qjwjh9ue46cctj2nzw8fdudfec6nd0e8gx9v485ek7p624j5leeykg70wmv59y3pqqn9ulv2".to_string();
+        let bolt11_decoded = client.ln_decodebolt11(invoice).await.unwrap();
         let peer =
             "02eadbd9e7557375161df8b646776a547c5cbc2e95b3071ec81553f8ec2cea3b8c@18.191.253.246:9735"
                 .to_string();

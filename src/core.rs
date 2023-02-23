@@ -6,6 +6,94 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
+
+// POST http://cyphernode:8888/getnewaddress
+// {"address_type":"bech32","label":"myLabel"}
+/*
+RESPONSE{
+  "balance":1.51911837
+}
+*/
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum AddressType {
+  Bech32,
+  P2SH,
+  Legacy
+}
+impl Default for AddressType{
+  fn default()->Self{
+    AddressType::Bech32
+  }
+}
+impl ToString for AddressType{
+  fn to_string(&self)->String{
+      match self{
+        AddressType::Bech32=>"bech32".to_string(),
+        AddressType::P2SH=>"p2sh-segwit".to_string(),
+        AddressType::Legacy=>"legacy".to_string(),
+      }
+  }
+
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AddressRequest {
+    pub address_type: AddressType,
+    pub label: String,
+}
+impl AddressRequest {
+    /// Used internally to convert api json string to native struct
+    pub fn from_str(stringified: &str) -> Result<AddressRequest, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Address {
+    pub address: String,
+}
+impl Address {
+    /// Used internally to convert api json string to native struct
+    pub fn from_str(stringified: &str) -> Result<Address, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
+        }
+    }
+}
+///Returns the a new address from core wallet
+pub async fn getnewaddress(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    body: AddressRequest,
+) -> Result<Address, String> {
+    let full_url: String = format!("https://{}/v0/getnewaddress", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.post(&full_url).json(&body).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match Address::from_str(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 // GET http://cyphernode:8888/getmempoolinfo
 /*
 RESPONSE{
@@ -28,7 +116,7 @@ pub struct MempoolInfo {
 }
 impl MempoolInfo {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<MempoolInfo, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<MempoolInfo, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
@@ -54,7 +142,7 @@ pub async fn getmempoolinfo(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match MempoolInfo::structify(&text) {
+                match MempoolInfo::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -126,6 +214,48 @@ RESPONSE{
   "balance":1.51911837
 }
 */
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Balance {
+    pub balance: f64,
+}
+impl Balance {
+    /// Used internally to convert api json string to native struct
+    pub fn from_str(stringified: &str) -> Result<Balance, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
+        }
+    }
+}
+///Returns the balance of core wallet
+pub async fn getbalance(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+) -> Result<Balance, String> {
+    let full_url: String = format!("https://{}/v0/getbalance", host).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match Balance::from_str(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
 
 // POST http://cyphernode:8888/bitcoin_estimatesmartfee
 /*

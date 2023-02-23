@@ -5,9 +5,11 @@ services:
       image: rust:buster
       container_name: cngateway
       volumes: 
-        - .:/usr/src/cngateway
+        - .:/tmp/cngateway
+      working_dir: /tmp/cngateway
       networks:
         - cyphernodeappsnet
+      
       command: tail -f "/dev/null"
 
 networks:
