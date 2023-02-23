@@ -3,6 +3,7 @@ name = "cngateway"
 version = "0.1.1"
 edition = "2021"
 description = "cyphernode gatekeeper client"
+license-file = "LISENCE"
 
 [dependencies]
 tokio = { version = "1.22.0", features = ["fs", "rt","macros"] }
