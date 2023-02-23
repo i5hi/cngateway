@@ -55,7 +55,7 @@ pub mod lightning;
 
 use crate::core::{
     MempoolInfo, 
-    AddressType, AddressRequest, Balance, Address
+    AddressType, AddressRequest, Balance, Address, IsValid
 };
 
 use crate::lightning::{
@@ -151,6 +151,10 @@ impl CnGateway {
             label: label
         };
         core::getnewaddress(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
+    }
+    /// Validate onchain address
+    pub async fn validateaddress(&self, address: String) -> Result<IsValid, String> {
+        core::validateaddress(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
     }
     //
     // BATCHER

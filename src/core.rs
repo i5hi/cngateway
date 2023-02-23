@@ -257,6 +257,50 @@ pub async fn getbalance(
     }
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IsValid {
+    pub isvalid: f64,
+}
+impl IsValid {
+    /// Used internally to convert api json string to native struct
+    pub fn from_str(stringified: &str) -> Result<IsValid, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
+        }
+    }
+}
+
+pub async fn validateaddress(
+    host: String,
+    jwt: String,
+    cert: Certificate,
+    address: String
+) -> Result<IsValid, String> {
+    let full_url: String = format!("https://{}/v0/validateaddress/{}", host,address).to_string();
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
+
+    let client = reqwest::Client::builder().add_root_certificate(cert);
+    let client = match client.default_headers(headers).build() {
+        Ok(result) => result,
+        Err(e) => return Err(e.to_string()),
+    };
+    match client.get(&full_url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(text) => {
+                println!("{}", text);
+                match IsValid::from_str(&text) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(e.message),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 // POST http://cyphernode:8888/bitcoin_estimatesmartfee
 /*
 REQUEST{
