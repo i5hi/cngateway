@@ -20,26 +20,39 @@ We need help building this client. It is not safe for production use yet.
 `docker exec -it cngateway sh -c 'cargo test cyphernodeappsnet'`
 
 ## usage
-
-```rust
-let client = CnGateway::new(url,api_key,None)?;
-// last None may be Some(std::env::var(CYPHERNODE_GATEKEEPER_CERT_CA))
-client.ping().await?;
-let lninfo = client.ln_getinfo().await?;
-let newaddr = client.ln_newaddr().await?;
-let connstr = client.ln_getconnectionstring().await?;
-let some_invoice = "lnbc920u1p3khp67pp5mcqxhupukc5te86wfkryerk8f69gg9ptzcep33ry94svm4wvwzqqdqqcqzzgxqyz5vqrzjqwnvuc0u4txn35cafc7w94gxvq5p3cu9dd95f7hlrh0fvs46wpvhdjx4k0kekn630gqqqqryqqqqthqqpyrzjqw8c7yfutqqy3kz8662fxutjvef7q2ujsxtt45csu0k688lkzu3ldjx4k0kekn630gqqqqryqqqqthqqpysp58nxs2nm5wphu234ggawaeul2tnpl6jqc9a0ymfhwpr64vq0k3l4s9qypqsqlkrver3pdxm0teyye0n6y5sje8u90t4j8vpxq3qjwjh9ue46cctj2nzw8fdudfec6nd0e8gx9v485ek7p624j5leeykg70wmv59y3pqqn9ulv2".to_string();
-let bolt11_decoded = client.ln_decodebolt11(some_invoice).await?;
-let peer =
-  "02b856473d51e796fc5ff6098afa424d5a35a6e06ce5aa83904a4dcc6f457196d3@149.56.123.56:9735"
-  .to_string();
-let msatoshis = 3_690_000;
-let callback_url = "yourcypherapp/callback/".to_string();
-let fund_stat = client.ln_connectfund(
-  peer, 
-  msatoshis, 
-  callback_url
-).await?
+```
+  let gatekeeper_ip = "gatekeeper:2009".to_string(); // if you are connected to cyphernodeappsnet IF NOT expose gatekeeper outside network and use localhost
+  let kid = "003".to_string();
+  let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
+  let cert_path = "/path/to/cacert.pem";
+  let client = CnGateway::new(
+    gatekeeper_ip,
+    kid,
+    key,
+    cert_path,
+  )
+  .await?;
+  // Use bitcoin core
+  let mempool = client.getmempoolinfo().await?;
+  let balance = client.getbalance().await?;
+  let address = client.getnewaddress(AddressType::Bech32,"dup".to_string()).await?; // uses the POST api format {address_type, label}
+  // Use lightning
+  let lninfo = client.ln_getinfo().await.unwrap();
+  let newaddr = client.ln_newaddr().await.unwrap();
+  let connstr = client.ln_getconnectionstring().await.unwrap();
+  let invoice = "lnbc920u1p3khp67pp5mcqxhupukc5te86wfkryerk8f69gg9ptzcep33ry94svm4wvwzqqdqqcqzzgxqyz5vqrzjqwnvuc0u4txn35cafc7w94gxvq5p3cu9dd95f7hlrh0fvs46wpvhdjx4k0kekn630gqqqqryqqqqthqqpyrzjqw8c7yfutqqy3kz8662fxutjvef7q2ujsxtt45csu0k688lkzu3ldjx4k0kekn630gqqqqryqqqqthqqpysp58nxs2nm5wphu234ggawaeul2tnpl6jqc9a0ymfhwpr64vq0k3l4s9qypqsqlkrver3pdxm0teyye0n6y5sje8u90t4j8vpxq3qjwjh9ue46cctj2nzw8fdudfec6nd0e8gx9v485ek7p624j5leeykg70wmv59y3pqqn9ulv2".to_string();
+  let bolt11_decoded = client.ln_decodebolt11(invoice).await.unwrap();
+  let peer =
+      "02eadbd9e7557375161df8b646776a547c5cbc2e95b3071ec81553f8ec2cea3b8c@18.191.253.246:9735"
+          .to_string();
+  let msatoshis = 3_690_000;
+  let callback_url = "http://yourcypherapp/callback/".to_string();
+  let fund_stat = client
+      .ln_connectfund(peer, msatoshis, callback_url)
+      .await
+      .err();
+  let list_funds = client.ln_listfunds().await.unwrap();
+  let list_pays = client.ln_listpays().await.unwrap();
 ```
 
 The cyphernode api request and response json types are internally converted into a native rust types.

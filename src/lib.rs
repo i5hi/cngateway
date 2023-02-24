@@ -14,10 +14,10 @@
 /// let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
 /// let cert_path = "/path/to/cacert.pem";
 /// let client = CnGateway::new(
-///     gatekeeper_ip.clone(),
-///     kid.clone(),
-///     key.clone(),
-///     cert_path.clone(),
+///     gatekeeper_ip,
+///     kid,
+///     key,
+///     cert_path,
 /// )
 /// .await?;
 /// // Use bitcoin core
