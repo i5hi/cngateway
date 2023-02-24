@@ -55,7 +55,7 @@ pub mod lightning;
 
 use crate::core::{
     MempoolInfo, 
-    AddressType, AddressRequest, Balance, Address, IsValid
+    AddressType, AddressRequest, Balance, Address
 };
 
 use crate::lightning::{
@@ -153,7 +153,7 @@ impl CnGateway {
         core::getnewaddress(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     /// Validate onchain address
-    pub async fn validateaddress(&self, address: String) -> Result<IsValid, String> {
+    pub async fn validateaddress(&self, address: String) -> Result<bool, String> {
         core::validateaddress(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
     }
     //
@@ -359,12 +359,15 @@ mod tests {
         println!("{}\n\n{:#?}", cert_path, client.cert);
         let mempool = client.getmempoolinfo().await.unwrap();
         let address = client.getnewaddress(AddressType::Bech32,"dup".to_string()).await.unwrap();
+        let validate_ok = client.validateaddress(address.clone().address).await.unwrap();
+        let validate_bad = client.validateaddress("bc1hahahaha".to_string()).await.unwrap();
+        assert!(validate_ok);
+        assert!(!validate_bad);
         let balance = client.getbalance().await.unwrap();
 
         println!("mempool: {:#?}", mempool);
         println!("address: {:#?}", address);
         println!("balance: {:#?}", balance);
-
 
     }
     #[tokio::test]

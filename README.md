@@ -1,6 +1,11 @@
 # cngateway
 
-a simple client library for cyphernode gatekeeper
+a client library for cyphernode gatekeeper
+
+# NOTE
+
+EXTREME BETA: 
+We need help building this client. It is not safe for production use yet. 
 
 ## setup
 
@@ -17,7 +22,7 @@ a simple client library for cyphernode gatekeeper
 ## usage
 
 ```rust
-let client = CnGatewayClient::new(url,api_key,None);
+let client = CnGateway::new(url,api_key,None)?;
 // last None may be Some(std::env::var(CYPHERNODE_GATEKEEPER_CERT_CA))
 client.ping().await?;
 let lninfo = client.ln_getinfo().await?;

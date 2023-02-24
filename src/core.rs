@@ -245,7 +245,6 @@ pub async fn getbalance(
     match client.get(&full_url).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
-                println!("{}", text);
                 match Balance::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
@@ -257,16 +256,39 @@ pub async fn getbalance(
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct IsValid {
-    pub isvalid: f64,
+
+
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ValidateAddressResponse {
+    pub result: Option<ValidatedAddress>,
+    pub error: Option<String>,
+    pub id: Option<usize>
 }
-impl IsValid {
-    /// Used internally to convert api json string to native struct
-    pub fn from_str(stringified: &str) -> Result<IsValid, S5Error> {
+impl ValidateAddressResponse {
+    pub fn from_str(stringified: &str) -> Result<ValidateAddressResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(e) => Err(S5Error::new(ErrorKind::Internal, &e.to_string())),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ValidatedAddress {
+    pub isvalid: bool,
+}
+impl ValidatedAddress {
+    pub fn from_str(stringified: &str) -> Result<ValidatedAddress, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(S5Error::new(
+                ErrorKind::Internal,
+                "Error from_str ValidateAddressResponse",
+            )),
         }
     }
 }
@@ -276,7 +298,7 @@ pub async fn validateaddress(
     jwt: String,
     cert: Certificate,
     address: String
-) -> Result<IsValid, String> {
+) -> Result<bool, String> {
     let full_url: String = format!("https://{}/v0/validateaddress/{}", host,address).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
@@ -290,15 +312,23 @@ pub async fn validateaddress(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match IsValid::from_str(&text) {
-                    Ok(result) => Ok(result),
-                    Err(e) => Err(e.message),
+                match ValidateAddressResponse::from_str(&text) {
+                    Ok(val) => {
+                        if val.result.is_some(){
+                            Ok(val.result.unwrap().isvalid)
+                        }
+                        else{
+                            return Err(val.error.unwrap())
+                        }
+                    },
+                    Err(e) => return Err(e.message),
                 }
             }
-            Err(e) => Err(e.to_string()),
+            Err(e) => return Err(e.to_string()),
         },
-        Err(e) => Err(e.to_string()),
+        Err(e) => return Err(e.to_string()),
     }
+
 }
 
 // POST http://cyphernode:8888/bitcoin_estimatesmartfee
