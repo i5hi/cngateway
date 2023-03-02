@@ -55,7 +55,7 @@ pub struct WatchAddress {
     #[serde(rename = "confirmedCallbackURL")]
     pub confirmed_callback_url: String,
     #[serde(rename = "eventMessage")]
-    pub event_message: String,
+    pub event_message: Option<String>,
     pub label: String,
 }
 
