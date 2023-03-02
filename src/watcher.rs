@@ -131,7 +131,7 @@ pub struct Watch {
     #[serde(rename = "watching_since")]
     pub watching_since: String,
     #[serde(rename = "eventMessage")]
-    pub event_message: String,
+    pub event_message: Option<String>,
 }
 
 pub async fn getactivewatches(
