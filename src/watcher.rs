@@ -122,7 +122,7 @@ impl ActiveWatches {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Watch {
-    pub id: String,
+    pub id: i64,
     pub address: String,
     pub imported: String,
     #[serde(rename = "unconfirmedCallbackURL")]
@@ -151,7 +151,6 @@ pub async fn getactivewatches(
     match client.get(&full_url).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
-                println!("{}", text);
                 match ActiveWatches::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
