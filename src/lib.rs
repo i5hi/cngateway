@@ -371,17 +371,20 @@ mod tests {
         let batcher_id = 1;
         let webhook_url: Option<String> = None;
 
-        // let add_status = client.getbatchdetails(batcher_id, None, None).await.unwrap();
-        // println!("add_status: {:#?}", add_status);
+        let batch_details = client.getbatchdetails(batcher_id, None, None).await.unwrap();
+        println!("batch_details: {:#?}", batch_details);
 
-        let add_status = client.addtobatch(address, amount, batcher_label, webhook_url.clone()).await.unwrap();
-        println!("add_status: {:#?}", add_status);
+        // let add_status = client.addtobatch(address, amount, batcher_label, webhook_url.clone()).await.unwrap();
+        // println!("add_status: {:#?}", add_status);
 
         let batchers =client.listbatchers().await.unwrap();
         println!("batchers: {:#?}", batchers);
 
-        let spend_status = client.batchspend(Some(batcher_label.to_string()), None, None).await.unwrap();
-        println!("spend_status: {:#?}", spend_status);
+        let batcher1 =client.getbatchdetails(batcher_id, None, None).await.unwrap();
+        println!("batcher1: {:#?}", batcher1);
+
+        // let spend_status = client.batchspend(Some(batcher_label.to_string()), None, None).await.unwrap();
+        // println!("spend_status: {:#?}", spend_status);
 
     }
     #[tokio::test]

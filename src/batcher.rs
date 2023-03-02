@@ -5,7 +5,6 @@ use reqwest::{
     Certificate,
 };
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ResponseType {
@@ -532,8 +531,8 @@ pub struct BatchDetailResponse {
     pub total: f64,
     pub txid: Option<String>,
     pub hash: Option<String>,
-    pub details: Details,
-    pub outputs: HashMap<String, f64>,
+    pub details: Option<Details>,
+    pub outputs: Option<Vec<Output>>,
 }
 impl BatchDetailResponse {
     /// Used internally to convert api json string to native struct
@@ -547,6 +546,17 @@ impl BatchDetailResponse {
         }
     }
 }
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Output {
+    pub output_id: i64,
+    pub output_label: Option<String>,
+    pub address: String,
+    pub amount: f64,
+    pub added_timestamp: String,
+}
+
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
