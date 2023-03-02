@@ -530,8 +530,8 @@ pub struct BatchDetailResponse {
     pub nb_outputs: i64,
     pub oldest: String,
     pub total: f64,
-    pub txid: String,
-    pub hash: String,
+    pub txid: Option<String>,
+    pub hash: Option<String>,
     pub details: Details,
     pub outputs: HashMap<String, f64>,
 }
