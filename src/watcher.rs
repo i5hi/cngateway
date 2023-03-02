@@ -120,7 +120,6 @@ impl ActiveWatches {
     }
 }
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Watch {
     pub id: i64,
     pub address: String,
@@ -131,6 +130,7 @@ pub struct Watch {
     pub confirmed_callback_url: String,
     #[serde(rename = "watching_since")]
     pub watching_since: String,
+    #[serde(rename = "eventMessage")]
     pub event_message: String,
 }
 
@@ -171,7 +171,6 @@ RESPONSE{
 }
 */
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct UnwatchAddress {
     pub event: String,
     pub address: String,
