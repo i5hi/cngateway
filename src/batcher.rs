@@ -685,6 +685,25 @@ pub async fn listbatchers(
         Err(e) => return Err(e.to_string()),
     }
 }
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatcherCallBack {
+    pub output_id: i64,
+    pub address: String,
+    pub amount: f64,
+    pub batcher_id: i64,
+    pub conf_target: i64,
+    pub nb_outputs: i64,
+    pub oldest: String,
+    pub total: f64,
+    pub status: String,
+    pub txid: String,
+    pub hash: String,
+    pub details: Details,
+}
+
+
 // // GET http://cyphernode:8888/batchspend
 // /*
 // RESPONSE{
