@@ -124,7 +124,7 @@ impl ActiveWatches {
 pub struct Watch {
     pub id: i64,
     pub address: String,
-    pub imported: String,
+    pub imported: bool,
     #[serde(rename = "unconfirmedCallbackURL")]
     pub unconfirmed_callback_url: String,
     #[serde(rename = "confirmedCallbackURL")]
