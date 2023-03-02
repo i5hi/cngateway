@@ -528,7 +528,7 @@ pub struct BatchDetailResponse {
     pub batcher_label: String,
     pub conf_target: i64,
     pub nb_outputs: i64,
-    pub oldest: i64,
+    pub oldest: String,
     pub total: f64,
     pub txid: String,
     pub hash: String,
