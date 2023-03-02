@@ -9,9 +9,9 @@ impl ProxyHello {
     pub fn from_str(stringified: &str) -> Result<ProxyHello, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying ProxyHello",
+                &e.to_string(),
             )),
         }
     }

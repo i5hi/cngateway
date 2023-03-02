@@ -39,7 +39,7 @@ impl WatchAddressReq {
     pub fn stringify(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
                 "Error stringifying WatchAddressReq",
             )),
@@ -61,12 +61,12 @@ pub struct WatchAddress {
 
 impl WatchAddress {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<WatchAddress, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<WatchAddress, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying WatchAddress",
+                "Error converting from_str WatchAddress",
             )),
         }
     }
@@ -91,7 +91,7 @@ pub async fn watch(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match WatchAddress::structify(&text) {
+                match WatchAddress::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -109,12 +109,12 @@ pub struct ActiveWatches {
 }
 impl ActiveWatches {
     /// Used internally to convert api json string to native struct
-    pub fn structify(stringified: &str) -> Result<ActiveWatches, S5Error> {
+    pub fn from_str(stringified: &str) -> Result<ActiveWatches, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying ActiveWatches",
+                &e.to_string(),
             )),
         }
     }
@@ -152,7 +152,7 @@ pub async fn getactivewatches(
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match ActiveWatches::structify(&text) {
+                match ActiveWatches::from_str(&text) {
                     Ok(result) => Ok(result),
                     Err(e) => Err(e.message),
                 }
@@ -186,9 +186,9 @@ impl UnwatchAddress {
     pub fn structify(stringified: &str) -> Result<UnwatchAddress, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying UnwatchAddress",
+                &e.to_string(),
             )),
         }
     }
@@ -296,9 +296,9 @@ impl WatchXpubReq {
     pub fn stringify(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying WatchXpubReq",
+                &e.to_string(),
             )),
         }
     }
@@ -322,9 +322,9 @@ impl WatchXpub {
     pub fn structify(stringified: &str) -> Result<WatchXpub, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying WatchXpub",
+                &e.to_string(),
             )),
         }
     }
@@ -373,9 +373,9 @@ impl UnwatchXpub {
     pub fn structify(stringified: &str) -> Result<UnwatchXpub, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying UnwatchXpub",
+                &e.to_string(),
             )),
         }
     }

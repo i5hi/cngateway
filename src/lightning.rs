@@ -24,9 +24,9 @@ impl LnInfo {
     pub fn from_str(stringified: &str) -> Result<LnInfo, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LightningInfo",
+                &e.to_string(),
             )),
         }
     }
@@ -80,9 +80,9 @@ impl LnFundAddress {
     pub fn from_str(stringified: &str) -> Result<LnFundAddress, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnFundAddress",
+                &e.to_string(),
             )),
         }
     }
@@ -127,9 +127,9 @@ impl LnConnString {
     pub fn from_str(stringified: &str) -> Result<LnConnString, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnConnString",
+                &e.to_string(),
             )),
         }
     }
@@ -184,9 +184,9 @@ impl LnConnectFundReq {
     pub fn to_string(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnConnectFundRequest",
+                &e.to_string(),
             )),
         }
     }
@@ -204,9 +204,9 @@ impl LnConnectFund {
     pub fn from_str(stringified: &str) -> Result<LnConnectFund, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnConnectFund",
+                &e.to_string(),
             )),
         }
     }
@@ -221,9 +221,9 @@ impl LnConnectFundError {
     pub fn from_str(stringified: &str) -> Result<LnConnectFundError, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnConnectFundError",
+                &e.to_string(),
             )),
         }
     }
@@ -279,9 +279,9 @@ impl LnBolt11 {
     pub fn from_str(stringified: &str) -> Result<LnBolt11, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error from_string LnBolt11",
+                &e.to_string(),
             )),
         }
     }
@@ -513,9 +513,9 @@ impl LnListFunds {
     pub fn from_str(stringified: &str) -> Result<LnListFunds, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error from_string LnListFunds",
+                &e.to_string(),
             )),
         }
     }
@@ -584,9 +584,9 @@ impl LnListPays {
     pub fn from_str(stringified: &str) -> Result<LnListPays, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error from_string LnListPays",
+                &e.to_string(),
             )),
         }
     }
@@ -638,9 +638,9 @@ impl LnRoutes {
     pub fn from_str(stringified: &str) -> Result<LnRoutes, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error from_string LnRoutes",
+                &e.to_string(),
             )),
         }
     }
@@ -707,9 +707,9 @@ impl LnWithdraw {
     pub fn from_str(stringified: &str) -> Result<LnWithdraw, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnWithdraw",
+                &e.to_string(),
             )),
         }
     }
@@ -738,9 +738,9 @@ impl LnWithdrawReq {
     pub fn to_string(&self) -> Result<String, S5Error> {
         match serde_json::to_string(&self.clone()) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error to_stringing LnWithdrawReq",
+                &e.to_string(),
             )),
         }
     }

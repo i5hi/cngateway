@@ -29,9 +29,9 @@ impl BatcherRespoonse {
     pub fn from_str(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting BatcherRespoonse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -60,9 +60,9 @@ impl CreateBatcherResponse {
     pub fn from_str(stringified: &str) -> Result<CreateBatcherResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting CreateBatcherResponse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -137,9 +137,9 @@ impl UpdateBatcherResponse {
     pub fn from_str(stringified: &str) -> Result<UpdateBatcherResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting UpdateBatcherResponse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -219,9 +219,9 @@ impl BatchInfoResponse {
     pub fn from_str(stringified: &str) -> Result<BatchInfoResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting BatchInfoResponse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -399,9 +399,9 @@ impl BatchSpendResponse {
     pub fn from_str(stringified: &str) -> Result<BatchSpendResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting BatchSpendResponse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -493,9 +493,9 @@ impl BatchDetailResponse {
     pub fn from_str(stringified: &str) -> Result<BatchDetailResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting BatchDetailResponse from string",
+                &e.to_string(),
             )),
         }
     }
@@ -558,9 +558,9 @@ impl ListBatchersResponse {
     pub fn from_str(stringified: &str) -> Result<ListBatchersResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error getting ListBatchersResponse from string",
+                &e.to_string(),
             )),
         }
     }

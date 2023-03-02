@@ -285,9 +285,9 @@ impl ValidatedAddress {
     pub fn from_str(stringified: &str) -> Result<ValidatedAddress, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
-            Err(_) => Err(S5Error::new(
+            Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error from_str ValidateAddressResponse",
+                &e.to_string(),
             )),
         }
     }
