@@ -16,7 +16,7 @@ pub struct WatchAddressReq {
     #[serde(rename = "confirmedCallbackURL")]
     pub confirmed_callback_url: String,
     #[serde(rename = "eventMessage")]
-    pub event_message: String,
+    pub event_message: Option<String>,
     pub label: String,
 }
 impl WatchAddressReq {
@@ -24,7 +24,7 @@ impl WatchAddressReq {
         address: String,
         unconfirmed_callback_url: String,
         confirmed_callback_url: String,
-        event_message: String,
+        event_message: Option<String>,
         label: String,
     ) -> Self {
         WatchAddressReq {
@@ -41,7 +41,7 @@ impl WatchAddressReq {
             Ok(result) => Ok(result),
             Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error stringifying WatchAddressReq",
+                &e.to_string(),
             )),
         }
     }
@@ -66,7 +66,7 @@ impl WatchAddress {
             Ok(result) => Ok(result),
             Err(e) => Err(S5Error::new(
                 ErrorKind::Internal,
-                "Error converting from_str WatchAddress",
+                &e.to_string(),
             )),
         }
     }

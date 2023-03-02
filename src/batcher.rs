@@ -21,12 +21,12 @@ pub enum ResponseType {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BatcherRespoonse {
-    pub result: ResponseType,
+pub struct CBatcherResponse {
+    pub result: CreateBatcherResponse,
     pub error: Option<String>,
 }
-impl BatcherRespoonse {
-    pub fn from_str(stringified: &str) -> Result<BatcherRespoonse, S5Error> {
+impl CBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<CBatcherResponse, S5Error> {
         match serde_json::from_str(stringified) {
             Ok(result) => Ok(result),
             Err(e) => Err(S5Error::new(
@@ -83,28 +83,28 @@ pub async fn createbatcher(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match CBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Create(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -144,6 +144,23 @@ impl UpdateBatcherResponse {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UBatcherResponse {
+    pub result: UpdateBatcherResponse,
+    pub error: Option<String>,
+}
+impl UBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<UBatcherResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
 ///Used to change batching template settings.
 pub async fn updatebatcher(
     host: String,
@@ -160,26 +177,25 @@ pub async fn updatebatcher(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match UBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Update(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
 
@@ -188,14 +204,14 @@ pub async fn updatebatcher(
 pub struct AddToBatchRequest {
     pub address: String,
     pub amount: f64,
-    pub batcher_label: Option<String>,
+    pub batcher_label: String,
     pub webhook_url: Option<String>,
 }
 impl AddToBatchRequest {
     pub fn new(
         address: String,
         amount: f64,
-        batcher_label: Option<String>,
+        batcher_label: String,
         webhook_url: Option<String>,
     ) -> Self {
         AddToBatchRequest {
@@ -226,6 +242,23 @@ impl BatchInfoResponse {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IBatcherResponse {
+    pub result: BatchInfoResponse,
+    pub error: Option<String>,
+}
+impl IBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<IBatcherResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
 ///Inserts output information in the DB. Used when batchspend is called later.
 pub async fn addtobatch(
     host: String,
@@ -242,26 +275,25 @@ pub async fn addtobatch(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match IBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Add(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
 
@@ -291,27 +323,27 @@ pub async fn removefrombatch(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match IBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Remove(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
+    
 }
 
 
@@ -345,26 +377,25 @@ pub async fn getbatcher(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match IBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Get(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
 
@@ -407,8 +438,25 @@ impl BatchSpendResponse {
     }
 }
 
-///Calls the sendmany RPC on spending wallet with the unspent "addtobatch" inserted outputs. 
-///Will execute default batcher if no batcherId/batcherLabel supplied and default confTarget if no confTarget supplied.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SBatcherResponse {
+    pub result: BatchSpendResponse,
+    pub error: Option<String>,
+}
+impl SBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<SBatcherResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
+/// Calls the sendmany RPC on spending wallet with the unspent "addtobatch" inserted outputs. 
+/// Will execute default batcher if no batcherId/batcherLabel supplied and default confTarget if no confTarget supplied.
 pub async fn batchspend(
     host: String,
     jwt: String,
@@ -424,26 +472,25 @@ pub async fn batchspend(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match SBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::Spend(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
 
@@ -501,6 +548,23 @@ impl BatchDetailResponse {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BDBatcherResponse {
+    pub result: BatchDetailResponse,
+    pub error: Option<String>,
+}
+impl BDBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<BDBatcherResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
 ///Will return current state and details of the requested batch, including all outputs. 
 ///A batch is the combination of a batcher and an optional txid. 
 /// If no txid is supplied, will return current non-yet-executed batch.
@@ -519,38 +583,39 @@ pub async fn getbatchdetails(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.post(&full_url).json(&body).send().await {
+    match client.post(&full_url).json(&body).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match BDBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::GetDetail(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
 
 
+pub type Batchers = Vec<ListBatchersResponse>;
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListBatchersResponse {
-    pub batcher_id: i64,
+    pub batcher_id: u64,
     pub batcher_label: String,
-    pub conf_target: i64,
-    pub nb_outputs: i64,
-    pub oldest: i64,
+    pub conf_target: usize,
+    pub nb_outputs: u32,
+    pub oldest: String,
     pub total: f64,
 }
 impl ListBatchersResponse {
@@ -565,14 +630,31 @@ impl ListBatchersResponse {
         }
     }
 }
-///Will return a list of batch templates. 
-///batcherId 1 is a default batcher created at installation time.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LBatcherResponse {
+    pub result: Batchers,
+    pub error: Option<String>,
+}
+impl LBatcherResponse {
+    pub fn from_str(stringified: &str) -> Result<LBatcherResponse, S5Error> {
+        match serde_json::from_str(stringified) {
+            Ok(result) => Ok(result),
+            Err(e) => Err(S5Error::new(
+                ErrorKind::Internal,
+                &e.to_string(),
+            )),
+        }
+    }
+}
+// ///Will return a list of batch templates. 
+// ///batcherId 1 is a default batcher created at installation time.
 
 pub async fn listbatchers(
     host: String,
     jwt: String,
     cert: Certificate,
-) -> Result<ListBatchersResponse, String> {
+) -> Result<Batchers, String> {
     let full_url: String = format!("https://{}/v0/listbatchers", host).to_string();
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, format!("Bearer {}", jwt).parse().unwrap());
@@ -582,33 +664,32 @@ pub async fn listbatchers(
         Ok(result) => result,
         Err(e) => return Err(e.to_string()),
     };
-    let response = match client.get(&full_url).send().await {
+    match client.get(&full_url).send().await {
         Ok(response) => match response.text().await {
             Ok(text) => {
                 println!("{}", text);
-                match BatcherRespoonse::from_str(&text) {
-                    Ok(result) => result,
+                match LBatcherResponse::from_str(&text) {
+                    Ok(result) => {
+                        if result.error.is_none(){
+                            Ok(result.result)
+                        }
+                        else{
+                            Err(result.error.unwrap().to_string())
+                        }
+                    },
                     Err(e) => return Err(e.message),
                 }
             }
             Err(e) => return Err(e.to_string()),
         },
         Err(e) => return Err(e.to_string()),
-    };
-    if response.error.is_some() {
-        return Err(response.error.unwrap());
-    } else {
-        match response.result {
-            ResponseType::List(res) => return Ok(res),
-            _ => unreachable!("IMPOSSIBRU!"),
-        }
     }
 }
-// GET http://cyphernode:8888/batchspend
-/*
-RESPONSE{
-  "status": "accepted",
-  "hash": "af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648"
-}
+// // GET http://cyphernode:8888/batchspend
+// /*
+// RESPONSE{
+//   "status": "accepted",
+//   "hash": "af867c86000da76df7ddb1054b273ca9e034e8c89d049b5b2795f9f590f67648"
+// }
 
-*/
+// */

@@ -67,7 +67,7 @@ use batcher::{
     AddToBatchRequest, BatchDetailResponse, BatchInfoResponse, BatchSpendRequest,
     BatchSpendResponse, CreateBatcherRequest, CreateBatcherResponse, GetBatchDetailRequest,
     GetBatcherRequest, ListBatchersResponse, RemoveFromBatchRequest,
-    UpdateBatcherRequest, UpdateBatcherResponse,
+    UpdateBatcherRequest, UpdateBatcherResponse, Batchers,
 };
 use watcher::{
     ActiveWatches, UnwatchAddress, UnwatchXpub, 
@@ -92,12 +92,12 @@ pub struct CnGateway {
 impl CnGateway {
     /// Initialize client with auth secrets
     pub async fn new(
-        host: String,
-        id: String,
-        key: String,
-        cert_path: String,
+        host: impl ToString,
+        id: impl ToString,
+        key: impl ToString,
+        cert_path: impl ToString,
     ) -> Result<Self, String> {
-            let cert_content = match tokio::fs::read_to_string(cert_path).await {
+            let cert_content = match tokio::fs::read_to_string(cert_path.to_string()).await {
                 Ok(result) => result,
                 Err(_) => return Err("Bad Path".to_string()),
             };
@@ -111,7 +111,7 @@ impl CnGateway {
                 Err(_) => return Err("Clock Went Backwards!".to_string()),
             };
             let payload = Claims {
-                id: id,
+                id: id.to_string(),
                 exp: now + LIFETIME,
             };
             let header = Header {
@@ -121,14 +121,14 @@ impl CnGateway {
             let token = match encode(
                 &header,
                 &payload,
-                &EncodingKey::from_secret(key.as_bytes()),
+                &EncodingKey::from_secret(key.to_string().as_bytes()),
             ) {
                 Ok(token) => token,
                 Err(_) => return Err("Error Encoding JWT!".to_string()),
             };
             Ok(CnGateway {
-                host,
-                token,
+                host: host.to_string(),
+                token: token,
                 cert: cert,
             })
         
@@ -145,26 +145,26 @@ impl CnGateway {
         core::getbalance(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Get new address
-    pub async fn getnewaddress(&self, address_type: AddressType, label: String) -> Result<Address, String> {
+    pub async fn getnewaddress(&self, address_type: AddressType, label: impl ToString) -> Result<Address, String> {
         let request = AddressRequest{
             address_type: address_type,
-            label: label
+            label: label.to_string()
         };
         core::getnewaddress(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     /// Validate onchain address
-    pub async fn validateaddress(&self, address: String) -> Result<bool, String> {
-        core::validateaddress(self.host.clone(), self.token.clone(), self.cert.clone(), address).await
+    pub async fn validateaddress(&self, address: impl ToString) -> Result<bool, String> {
+        core::validateaddress(self.host.clone(), self.token.clone(), self.cert.clone(), address.to_string()).await
     }
     //
     // BATCHER
     //
     pub async fn createbatcher(
         &self,
-        batcher_label: String,
+        batcher_label: impl ToString,
         conf_target: u64,
     ) -> Result<CreateBatcherResponse, String> {
-        let request = CreateBatcherRequest::new(batcher_label, conf_target);
+        let request = CreateBatcherRequest::new(batcher_label.to_string(), conf_target);
         batcher::createbatcher(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn updatebatcher(
@@ -178,12 +178,12 @@ impl CnGateway {
     }
     pub async fn addtobatch(
         &self,
-        address: String,
+        address: impl ToString,
         amount: f64,
-        batcher_label: Option<String>,
+        batcher_label: impl ToString,
         webhook_url: Option<String>,
     ) -> Result<BatchInfoResponse, String> {
-        let request = AddToBatchRequest::new(address, amount, batcher_label, webhook_url);
+        let request = AddToBatchRequest::new(address.to_string(), amount, batcher_label.to_string(), webhook_url);
         batcher::addtobatch(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
     pub async fn removefrombatch(&self, output_id: u64) -> Result<BatchInfoResponse, String> {
@@ -207,7 +207,7 @@ impl CnGateway {
         let request = GetBatchDetailRequest::new(batcher_id, batcher_label, txid);
         batcher::getbatchdetails(self.host.clone(), self.token.clone(), self.cert.clone(), request).await
     }
-    pub async fn listbatchers(&self) -> Result<ListBatchersResponse, String> {
+    pub async fn listbatchers(&self) -> Result<Batchers, String> {
         batcher::listbatchers(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     pub async fn batchspend(
@@ -224,18 +224,18 @@ impl CnGateway {
     //
     pub async fn watch(
         &self,
-        address: String,
-        unconfirmed_callback_url: String,
-        confirmed_callback_url: String,
-        event_message: String,
-        label: String,
+        address: impl ToString,
+        unconfirmed_callback_url: impl ToString,
+        confirmed_callback_url: impl ToString,
+        label: impl ToString,
+        event_message: Option<String>,
     ) -> Result<WatchAddress, String> {
         let body = WatchAddressReq::new(
-            address,
-            unconfirmed_callback_url,
-            confirmed_callback_url,
+            address.to_string(),
+            unconfirmed_callback_url.to_string(),
+            confirmed_callback_url.to_string(),
             event_message,
-            label,
+            label.to_string(),
         );
         watcher::watch(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
@@ -247,26 +247,26 @@ impl CnGateway {
     /// Get addresses currently being watched
     pub async fn watchxpub(
         &self,
-        label: String,
-        pub32: String,
-        path: String,
+        label: impl ToString,
+        pub32: impl ToString,
+        path: impl ToString,
         nstart: i64,
-        unconfirmed_callback_url: String,
-        confirmed_callback_url: String,
+        unconfirmed_callback_url: impl ToString,
+        confirmed_callback_url: impl ToString,
     ) -> Result<WatchXpub, String> {
         let body = WatchXpubReq::new(
-            label,
-            pub32,
-            path,
+            label.to_string(),
+            pub32.to_string(),
+            path.to_string(),
             nstart,
-            unconfirmed_callback_url,
-            confirmed_callback_url,
+            unconfirmed_callback_url.to_string(),
+            confirmed_callback_url.to_string(),
         );
         watcher::watchxpub(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Unwatch a bitcoin xpub
-    pub async fn unwatchxpubbyxpub(&self, xpub: String) -> Result<UnwatchXpub, String> {
-        watcher::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub).await
+    pub async fn unwatchxpubbyxpub(&self, xpub: impl ToString) -> Result<UnwatchXpub, String> {
+        watcher::unwatchxpubbyxpub(self.host.clone(), self.token.clone(), self.cert.clone(), xpub.to_string()).await
     }
     /// Get addresses currently being watched
     pub async fn getactivewatches(&self) -> Result<ActiveWatches, String> {
@@ -288,17 +288,17 @@ impl CnGateway {
         lightning::ln_getconnectionstring(self.host.clone(), self.token.clone(), self.cert.clone()).await
     }
     /// Decode an invoice
-    pub async fn ln_decodebolt11(&self, invoice: String) -> Result<LnBolt11, String> {
-        lightning::ln_decodebolt11(self.host.clone(), self.token.clone(), self.cert.clone(), invoice).await
+    pub async fn ln_decodebolt11(&self, invoice: impl ToString) -> Result<LnBolt11, String> {
+        lightning::ln_decodebolt11(self.host.clone(), self.token.clone(), self.cert.clone(), invoice.to_string()).await
     }
     /// Connect to a given peer and attempt opening a channel and fund it with msatoshis. Get notified at callback_url.
     pub async fn ln_connectfund(
         &self,
-        peer: String,
+        peer: impl ToString,
         msatoshis: u128,
-        callback_url: String,
+        callback_url: impl ToString,
     ) -> Result<LnConnectFund, String> {
-        let body = LnConnectFundReq::new(peer, msatoshis, callback_url);
+        let body = LnConnectFundReq::new(peer.to_string(), msatoshis, callback_url.to_string());
         lightning::ln_connectfund(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
     /// Returns the list of unused outputs and funds in open channels
@@ -329,11 +329,11 @@ impl CnGateway {
     /// Withdraw funds from channel back on main chain
     pub async fn ln_withdraw(
         &self,
-        address: String,
+        address: impl ToString,
         satoshis: u128,
-        feerate: String,
+        feerate: impl ToString,
     ) -> Result<LnWithdraw, String> {
-        let body = LnWithdrawReq::new(address, satoshis, feerate);
+        let body = LnWithdrawReq::new(address.to_string(), satoshis, feerate.to_string());
         lightning::ln_withdraw(self.host.clone(), self.token.clone(), self.cert.clone(), body).await
     }
 }
@@ -343,20 +343,8 @@ mod tests {
 
     #[tokio::test]
     async fn local_bitcoin_testnet() {
-        let gatekeeper_ip = "localhost:2009".to_string();
-        let kid = "003".to_string();
-        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
-        let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/certs/cacert.pem", project_path);
-        let client = CnGateway::new(
-            gatekeeper_ip.clone(),
-            kid.clone(),
-            key.clone(),
-            cert_path.clone(),
-        )
-        .await
-        .unwrap();
-        println!("{}\n\n{:#?}", cert_path, client.cert);
+        let client = new_client_localhost().await;
+
         let mempool = client.getmempoolinfo().await.unwrap();
         let address = client.getnewaddress(AddressType::Bech32,"dup".to_string()).await.unwrap();
         let validate_ok = client.validateaddress(address.clone().address).await.unwrap();
@@ -364,28 +352,41 @@ mod tests {
         assert!(validate_ok);
         assert!(!validate_bad);
         let balance = client.getbalance().await.unwrap();
-
         println!("mempool: {:#?}", mempool);
         println!("address: {:#?}", address);
         println!("balance: {:#?}", balance);
 
     }
+
+    #[tokio::test]
+    async fn local_batcher_testnet() {
+        let client = new_client_localhost().await;
+
+        // default slow and fast batchers already exist
+        // let batcher = client.createbatcher("sm11p".to_string(), 3).await.unwrap();
+        // println!("batcher: {:#?}", batcher);
+        let address = "tb1qks9n9440qesu5hvnafc7m2hvuemtynwmwmj2va";
+        let amount = 0.00003000;
+        let batcher_label = "default";
+        let batcher_id = 1;
+        let webhook_url: Option<String> = None;
+
+        // let add_status = client.getbatchdetails(batcher_id, None, None).await.unwrap();
+        // println!("add_status: {:#?}", add_status);
+
+        let add_status = client.addtobatch(address, amount, batcher_label, webhook_url.clone()).await.unwrap();
+        println!("add_status: {:#?}", add_status);
+
+        let batchers =client.listbatchers().await.unwrap();
+        println!("batchers: {:#?}", batchers);
+
+        let spend_status = client.batchspend(Some(batcher_label.to_string()), None, None).await.unwrap();
+        println!("spend_status: {:#?}", spend_status);
+
+    }
     #[tokio::test]
     async fn local_ln_testnet() {
-        let gatekeeper_ip = "localhost:2009".to_string();
-        let kid = "003".to_string();
-        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
-        let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/certs/cacert.pem", project_path);
-
-        let client = CnGateway::new(
-            gatekeeper_ip.clone(),
-            kid.clone(),
-            key.clone(),
-            cert_path.clone(),
-        )
-        .await
-        .unwrap();
+        let client = new_client_localhost().await;
 
         let lninfo = client.ln_getinfo().await.unwrap();
         let newaddr = client.ln_newaddr().await.unwrap();
@@ -424,17 +425,45 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn docker_cypherappsnet() {
-        let gatekeeper_ip = "gatekeeper:2009".to_string();
-        let kid = "003".to_string();
-        let key = "72c628d3748acb1de54ee683f1c16375732d3ae96f3908cf25a7fedda6ace01c".to_string();
-        let project_path = env!("CARGO_MANIFEST_DIR");
-        let cert_path = format!("{}/certs/cacert.pem", project_path);
-
-        let client = CnGateway::new(gatekeeper_ip, kid, key, cert_path.clone())
-            .await
-            .unwrap();
-        println!("{}\n\n{:#?}", cert_path, client.cert);
+        let client = new_client_cyphernodeappsnet().await;
         let mempool = client.getmempoolinfo().await.unwrap();
         println!("{:#?}", mempool);
+    }
+    /*
+    
+
+    HELPERS
+    
+
+     */
+    async fn new_client_localhost()->CnGateway{
+        let gatekeeper_ip = "localhost:2009".to_string();
+        let kid = "003".to_string();
+        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
+        let project_path = env!("CARGO_MANIFEST_DIR");
+        let cert_path = format!("{}/certs/cacert.pem", project_path);
+        CnGateway::new(
+            gatekeeper_ip.clone(),
+            kid.clone(),
+            key.clone(),
+            cert_path.clone(),
+        )
+        .await
+        .unwrap()
+    }
+    async fn new_client_cyphernodeappsnet()->CnGateway{
+        let gatekeeper_ip = "gatekeeper:2009".to_string();
+        let kid = "003".to_string();
+        let key = "c06f9fc30c50ab7541cefaeb58708fe28babcf7d5ed1767a59685f63d0b63c54".to_string();
+        let project_path = env!("CARGO_MANIFEST_DIR");
+        let cert_path = format!("{}/certs/cacert.pem", project_path);
+        CnGateway::new(
+            gatekeeper_ip.clone(),
+            kid.clone(),
+            key.clone(),
+            cert_path.clone(),
+        )
+        .await
+        .unwrap()
     }
 }
