@@ -688,7 +688,7 @@ pub async fn listbatchers(
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BatcherCallBack {
+pub struct BatcherCallback {
     pub output_id: i64,
     pub address: String,
     pub amount: f64,
